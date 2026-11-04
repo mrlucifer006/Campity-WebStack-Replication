@@ -1,0 +1,2486 @@
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN
+DOES PRE-TRAINING HELP OR HURT?
+U21CS503 — COMPUTER VISION PROJECT REPORT
+Submitted by
+Register No
+
+Student Name
+
+24CS129
+
+Narendran R
+
+24CS130
+
+Navaneethan K
+
+24CS131
+
+Naveen S
+
+24CS132
+
+Naveena R
+
+24CS134
+
+Nethara G
+
+In partial fulfillment for the award of the degree of
+BACHELOR OF ENGINEERING
+in
+COMPUTER SCIENCE AND ENGINEERING
+
+DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING
+
+KPR INSTITUTE OF ENGINEERING AND TECHNOLOGY
+(Autonomous Institution)
+ARASUR, COIMBATORE – 641 407
+ANNA UNIVERSITY: CHENNAI 600 025
+
+NOVEMBER 2026
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+BONAFIDE CERTIFICATE
+Certified that this project report titled 'TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING
+HELP OR HURT?' is the bonafide work of Narendran R (24CS129), Navaneethan K (24CS130), Naveen S (24CS131), Naveena R
+(24CS132), and Nethara G (24CS134) who carried out the project work under my supervision.
+The project demonstrates a rigorous empirical analysis of visual transferability across near-domain (CIFAR-10) and far-domain
+(MedMNIST PathMNIST) distributions utilizing ResNet-50, EfficientNet-B0, and MobileNet-V2 architectures evaluated under four
+adaptation regimes, augmented with layer-wise Linear Centered Kernel Alignment (CKA) representation drift diagnostics.
+
+FACULTY INCHARGE
+
+HEAD OF THE DEPARTMENT
+
+____________________________
+Mr. T. Munirathinam
+Assistant Professor III
+Department of Computer Science and Engineering
+KPR Institute of Engineering and Technology
+Coimbatore - 641 407
+
+____________________________
+Dr. S. Miruna Joe Amali
+Professor & Head
+Department of Computer Science and Engineering
+KPR Institute of Engineering and Technology
+Coimbatore - 641 407
+
+Submitted for Project Viva-Voce Examination held on ____________________
+
+____________________________
+INTERNAL EXAMINER
+
+Department of Computer Science and Engineering, KPRIET
+
+____________________________
+EXTERNAL EXAMINER
+
+I
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+ACKNOWLEDGEMENT
+We wish to express our heartfelt thanks and gratitude to our honorable Chairman Dr. K. P. RAMASAMY, KPR Group of Institutions,
+for providing state-of-the-art computational facilities and infrastructure during the course of our study in the college.
+We would like to express our deep gratitude and sincere regards to our beloved and honourable Principal Dr. Akila
+Muthuramalingam, KPR Institute of Engineering and Technology, who gave us the opportunity to formulate and execute this
+research project to the fullest satisfaction.
+We owe a genuine gratitude to Dr. S. MIRUNA JOE AMALI, Professor and Head of the Department, Department of Computer
+Science and Engineering, for her invaluable support, administrative encouragement, and guidance throughout the progression of this
+project work.
+We are deeply grateful to our project supervisor Mr. T. Munirathinam, Assistant Professor III, Department of Computer Science and
+Engineering, for his intellectual guidance, timely suggestions, and constant encouragement that steered the empirical execution of the
+benchmark matrix.
+We owe special thanks to Year Head Dr. V. PRIYA, Associate Professor, Department of Computer Science and Engineering, for her
+continuous coordination and support throughout our curriculum.
+This acknowledgement would be incomplete without expressing sincere gratitude to all our faculty members, technical staff, parents,
+and friends for their continuous encouragement, patience, and unwavering faith throughout our academic journey.
+
+Narendran R (24CS129)
+Navaneethan K (24CS130)
+Naveen S (24CS131)
+Naveena R (24CS132)
+Nethara G (24CS134)
+
+Department of Computer Science and Engineering, KPRIET
+
+II
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+ABSTRACT
+Transfer learning utilizing deep Convolutional Neural Networks (CNNs) pre-trained on ImageNet-1k has emerged as the de facto
+foundational paradigm across modern computer vision applications. However, standard engineering workflows routinely fine-tune
+pre-trained backbones under the unverified assumption that pre-training universally provides substantial accuracy and convergence
+improvements over random initialization. This research paper provides a comprehensive empirical characterization of the boundary
+conditions governing visual transfer learning across varying domain distances, architectural topologies, and adaptation strategies.
+We construct a rigorous $2 \times 3 \times 4 = 24$ empirical evaluation matrix spanning two contrasting visual domains: a
+Near-Domain photographic benchmark (CIFAR-10, 10 classes of natural objects) and an out-of-distribution Far-Domain medical
+benchmark (MedMNIST PathMNIST, 9 classes of colorectal adenocarcinoma histology slices). We systematically examine three
+distinct architectural paradigms—ResNet-50 (deep residual), EfficientNet-B0 (compound scaled neural search), and MobileNet-V2
+(inverted residual bottlenecks)—under four adaptation regimes: (1) training from scratch with random initialization, (2) feature
+extraction with a frozen backbone, (3) partial fine-tuning targeting deep residual stages, and (4) full fine-tuning with differential
+learning rates ($10^{-4}$ on backbone, $10^{-3}$ on head).
+To diagnose underlying representation dynamics beyond raw classification metrics, we incorporate layer-wise Linear Centered
+Kernel Alignment (CKA) on an identical calibration batch of $N = 1000$ samples. Empirical findings demonstrate that while
+near-domain transfer accelerates convergence by over $10\times$ and yields up to a +56.00% accuracy margin over random
+initialization, far-domain transfer suffers a severe feature extraction bottleneck where frozen representations drop to 28.00% on
+PathMNIST. CKA heatmaps reveal that while early convolutional layers (`conv1`) preserve universal edge and texture filters
+($\text{CKA} > 0.97$) regardless of initialization, deep residual blocks undergo radical representational drift ($\text{CKA} < 0.50$) in
+distant domains, proving that deep semantic filters must be retrained. Finally, we synthesize actionable practitioner heuristics to guide
+neural architecture and fine-tuning selection.
+
+Keywords: Transfer Learning, Computer Vision, Centered Kernel Alignment (CKA), Representation Drift, ResNet-50, EfficientNet,
+MobileNet, MedMNIST, Domain Distance, Inductive Transfer.
+
+Department of Computer Science and Engineering, KPRIET
+
+III
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+TABLE OF CONTENTS
+CHAPTER NO
+
+TITLE
+
+PAGE NO
+
+ABSTRACT
+
+III
+
+LIST OF TABLES
+
+VI
+
+LIST OF FIGURES
+
+VII
+
+LIST OF ABBREVIATIONS
+
+VIII
+
+1
+
+INTRODUCTION
+
+1
+
+1.1
+
+Objective of the Research Investigation
+
+1
+
+1.2
+
+Computer Vision & Feature Hierarchies
+
+1
+
+1.3
+
+Theoretical Foundations of Visual Transfer Learning
+
+1
+
+1.4
+
+Inductive Biases in Convolutional Architectures
+
+2
+
+1.5
+
+Statistical Divergence Across Visual Domain Manifolds
+
+2
+
+1.6
+
+Problem Scope, Delimitations, & Operational Assumptions
+
+2
+
+1.7
+
+Organization of the Project Report
+
+2
+
+2
+
+LITERATURE SURVEY
+
+3
+
+2.1
+
+The Genesis of Transferability: AlexNet to ResNet
+
+3
+
+2.2
+
+Deep Residual Learning & Feature Reuse (He et al.)
+
+3
+
+2.3
+
+Compound Scaling & Neural Architecture Search (Tan & Le)
+
+3
+
+2.4
+
+Mobile Inverted Bottlenecks & Edge Vision (Sandler et al.)
+
+4
+
+2.5
+
+The ImageNet Pre-training Paradigm: Rethinking Defaults
+
+4
+
+2.6
+
+Biomedical Visual Domain Shift & Transfusion Analysis
+
+4
+
+2.7
+
+Standardized Medical Image Benchmarks: MedMNIST
+
+4
+
+2.8
+
+Representational Similarity: CCA vs CKA (Kornblith et al.)
+
+4
+
+2.9
+
+Negative Transfer & Representational Distortion
+
+4
+
+2.10
+
+Comprehensive Literature Review & Comparison Matrix
+
+5
+
+3
+
+PROBLEM IDENTIFICATION AND METHODOLOGY
+
+6
+
+3.1
+
+Problem Statement & Industrial Gaps
+
+6
+
+3.2
+
+Formal Mathematical Problem Formulation
+
+6
+
+3.3
+
+Research Questions & Boundary Hypotheses
+
+6
+
+3.4
+
+Mathematical Derivation of Linear CKA
+
+7
+
+3.5
+
+Methodology Flowchart and Phased Architecture
+
+7
+
+Department of Computer Science and Engineering, KPRIET
+
+IV
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+TABLE OF CONTENTS (CONTINUED)
+CHAPTER NO
+
+TITLE
+
+PAGE NO
+
+4
+
+PROPOSED SYSTEM AND ARCHITECTURAL DESIGN
+
+9
+
+4.1
+
+Global System Architecture Overview
+
+9
+
+4.2
+
+Data Ingestion & Visual Domain Shift Analysis
+
+10
+
+4.3
+
+Vision Backbone Architectures & Micro-Topologies
+
+11
+
+4.4
+
+Four Transfer Adaptation Strategies & Freezing Logic
+
+12
+
+4.5
+
+Standardized Head Design & Parameter Allocation
+
+13
+
+4.6
+
+Feature Extraction Hooking & CKA Calibration Engine
+
+13
+
+5
+
+EXPERIMENTAL RESULTS AND DISCUSSION
+
+14
+
+5.1
+
+Benchmark Experimental Setup & Hardware Configuration
+
+14
+
+5.2
+
+Complete 24-Configuration Matrix Empirical Results
+
+15
+
+5.3
+
+Comparative Architectural Generalization
+
+16
+
+5.4
+
+Computational Latency & Efficiency Profiles
+
+16
+
+5.5
+
+Transfer Benefit Delta Margin Across Domain Boundaries
+
+17
+
+5.6
+
+Representation Drift Diagnosis: Near-Domain (CIFAR-10)
+
+18
+
+5.7
+
+Representation Drift Diagnosis: Far-Domain (PathMNIST)
+
+19
+
+5.8
+
+Representation Drift Curves Across Depth & Insights
+
+20
+
+5.9
+
+Detailed Layer-by-Layer Representation Breakdown
+
+20
+
+6
+
+PRACTITIONER GUIDELINES & DECISION FRAMEWORK
+
+21
+
+6.1
+
+Strategic Decision Matrix for Applied Vision
+
+21
+
+6.2
+
+Adaptation Strategy Decision Tree Flowchart
+
+22
+
+6.3
+
+Core Practical Rules of Thumb & Failure Modes
+
+22
+
+7
+
+CONCLUSION AND FUTURE SCOPE
+
+23
+
+7.1
+
+Comprehensive Summary of Empirical Findings
+
+23
+
+7.2
+
+Threats to Validity & Research Limitations
+
+23
+
+7.3
+
+Future Research Directions & Next-Gen Paradigms
+
+23
+
+A
+
+APPENDIX: CORE SOURCE CODE LISTINGS
+
+24
+
+REFERENCES
+
+25
+
+Department of Computer Science and Engineering, KPRIET
+
+V
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+LIST OF TABLES
+
+TABLE NO
+
+TITLE
+
+PAGE NO
+
+2.1
+
+Literature Survey Comparison Matrix Across Transfer Learning Paradigms
+
+5
+
+4.1
+
+Dataset Specifications: CIFAR-10 vs MedMNIST PathMNIST
+
+10
+
+4.2
+
+Backbone Architecture Parameter and Structural Specifications
+
+11
+
+4.3
+
+Detailed Configuration of the Four Adaptation Strategies
+
+12
+
+4.4
+
+Parameter Allocation and Freezing Ratios Across Networks
+
+13
+
+5.1
+
+Benchmark Experimental Hyperparameters & Hardware Configuration
+
+14
+
+5.2
+
+Empirical Benchmark Matrix Results (24 Experiments)
+
+15
+
+5.3
+
+Transfer Margin Delta (Full Finetune vs Scratch) Across Domains
+
+17
+
+5.4
+
+Layer-wise Diagonal CKA Alignment for ResNet-50 Across Network Depth
+
+20
+
+6.1
+
+Practitioner Strategic Decision Matrix Based on Data & Domain Distance
+
+21
+
+Department of Computer Science and Engineering, KPRIET
+
+VI
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+LIST OF FIGURES
+
+FIG NO
+
+TITLE
+
+PAGE NO
+
+3.1
+
+Research Methodology and Phased Experimental Flowchart
+
+8
+
+4.1
+
+Global System Architecture for Empirical Benchmark & Representation Diagnosis
+
+9
+
+4.2
+
+Visual Domain Divergence: Near-Domain (CIFAR-10) vs Far-Domain (PathMNIST)
+
+10
+
+4.3
+
+Comparative Micro-Architectural Block Topologies (ResNet, EfficientNet, MobileNet)
+
+11
+
+4.4
+
+Architectural Topologies of the Four Adaptation Regimes & Freezing Logic
+
+12
+
+4.5
+
+Linear CKA (Centered Kernel Alignment) Mathematical Pipeline
+
+13
+
+5.1
+
+Top-1 Accuracy Across Architectures, Domains, and Adaptation Strategies
+
+16
+
+5.2
+
+Computational Training Duration Across Architectures and Adaptation Regimes
+
+16
+
+5.3
+
+Transfer Benefit Delta Margin (Full Finetune vs Scratch) Across Domains
+
+17
+
+5.4
+
+Linear CKA Layer-wise Representation Heatmaps for Near-Domain (CIFAR-10)
+
+18
+
+5.5
+
+Linear CKA Layer-wise Representation Heatmaps for Far-Domain (PathMNIST)
+
+19
+
+5.6
+
+Representational Drift Curve Across Network Depth (Near vs Far Domains)
+
+20
+
+5.7
+
+Standard Linear CKA Similarity Heatmap for Pre-trained ResNet-50
+
+29
+
+6.1
+
+Transfer Learning Adaptation Strategy Decision Framework Flowchart
+
+22
+
+Department of Computer Science and Engineering, KPRIET
+
+VII
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+LIST OF ABBREVIATIONS
+
+ABBREVIATION
+
+EXPANSION / DEFINITION
+
+CKA
+
+Centered Kernel Alignment
+
+CNN
+
+Convolutional Neural Network
+
+HSIC
+
+Hilbert-Schmidt Independence Criterion
+
+GAP
+
+Global Average Pooling
+
+OOD
+
+Out-of-Distribution
+
+ResNet
+
+Residual Network (He et al., 2016)
+
+MobileNet
+
+Mobile Inverted Residual Bottleneck Network (Sandler et al., 2018)
+
+EfficientNet
+
+Compound Scaled Convolutional Network (Tan & Le, 2019)
+
+CIFAR
+
+Canadian Institute For Advanced Research
+
+MedMNIST
+
+Medical MNIST Benchmark for Biomedical Image Analysis (Yang et al., 2023)
+
+PathMNIST
+
+Colorectal Cancer Histology Pathology Image Dataset
+
+H&E;
+
+Hematoxylin and Eosin (Biochemical Histological Stain)
+
+LR
+
+Learning Rate
+
+AMP
+
+Automatic Mixed Precision
+
+AdamW
+
+Adam Optimizer with Decoupled Weight Decay
+
+MLP
+
+Multi-Layer Perceptron
+
+FC
+
+Fully Connected Layer
+
+GPU
+
+Graphics Processing Unit
+
+VRAM
+
+Video Random Access Memory
+
+RKHS
+
+Reproducing Kernel Hilbert Space
+
+SVCCA
+
+Singular Vector Canonical Correlation Analysis
+
+Department of Computer Science and Engineering, KPRIET
+
+VIII
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+CHAPTER 1
+INTRODUCTION
+1.1 Objective of the Research Investigation
+The overarching objective of this research is to establish a rigorous, mathematically grounded, and empirically validated benchmark
+that determines the precise boundary conditions governing visual transfer learning using deep Convolutional Neural Networks
+(CNNs). Specifically, this project aims to answer the foundational question: When does ImageNet pre-training help downstream visual
+classification, when does it yield negligible gain over random initialization, and when does it induce negative transfer or
+representational distortion?
+To accomplish this core objective, the investigation pursues four concrete research thrusts:
+• Cross-Domain Comparative Matrix: Evaluate transferability across two visually contrasting domain regimes—a Near-Domain
+photographic task (CIFAR-10) and an Out-of-Distribution Far-Domain medical task (MedMNIST PathMNIST).
+• Architectural Generalization: Compare three distinct topological families—deep residual topologies (ResNet-50), neural
+architecture search compound-scaled networks (EfficientNet-B0), and lightweight inverted residual architectures (MobileNet-V2).
+• Adaptation Regime Analysis: Systematically benchmark four training configurations: training from scratch, linear feature extraction
+(frozen backbone), partial fine-tuning of deep residual stages, and differential learning rate full fine-tuning.
+• Representational Drift Diagnosis: Quantify layer-by-layer representation distortion using Linear Centered Kernel Alignment (CKA)
+to mathematically characterize feature drift across network depth.
+
+1.2 Computer Vision & Feature Hierarchies
+Computer vision has undergone a monumental paradigm shift over the past two decades. Early computer vision pipelines relied
+extensively on hand-engineered visual descriptors—such as Scale-Invariant Feature Transform (SIFT), Histogram of Oriented
+Gradients (HOG), and Speeded-Up Robust Features (SURF)—coupled with classical shallow classifiers like Support Vector
+Machines (SVMs) or Random Forests. While these hand-crafted representations provided scale and rotation invariance for rigid
+objects, they lacked the semantic abstraction and adaptive representation power necessary for complex visual scenes.
+The advent of deep Convolutional Neural Networks (CNNs) initiated an era of end-to-end representation learning. Rather than relying
+on human-designed heuristics, CNNs autonomously discover hierarchical feature representations directly from raw pixel intensities
+through gradient backpropagation. In this hierarchical paradigm, successive convolutional layers learn increasingly sophisticated
+spatial abstractions: early layers function as oriented Gabor filter banks sensitive to edges, color boundaries, and spatial frequencies;
+intermediate layers compose these primitives into textural motifs, corners, and object parts; and terminal layers synthesize high-level
+semantic categories.
+
+1.3 Theoretical Foundations of Visual Transfer Learning
+In formal statistical machine learning, visual transfer learning addresses the challenge of insufficient labeled training data in a target
+domain by transferring inductive knowledge acquired from a data-abundant source domain. Formally, let a domain be defined as a
+tuple $\mathcal{D} = \{\mathcal{X}, \mathcal{P}(X)\}$, where $\mathcal{X}$ denotes the feature space and $\mathcal{P}(X)$
+represents the marginal probability distribution over input instances $X = \{x_1, \dots, x_N\} \subset \mathcal{X}$. Given a domain
+$\mathcal{D}$, a predictive task is defined as $\mathcal{T} = \{\mathcal{Y}, \mathcal{P}(Y|X)\}$, consisting of a label space
+$\mathcal{Y}$ and a conditional probability mapping $\mathcal{P}(Y|X)$, typically estimated via the neural network parameters
+$\theta$.
+In the canonical transfer learning setup, we are provided with a high-capacity source domain $\mathcal{D}_S$ equipped with a rich
+task $\mathcal{T}_S$ (specifically, ImageNet-1k encompassing 1.28 million natural photographic images spanning 1000 categories).
+Training a neural network on $\mathcal{D}_S$ optimizes parameter vector $\theta_S^* = \arg\min_\theta \mathcal{L}_S(f(X_S; \theta),
+Y_S)$. When presented with a distinct target task $\mathcal{T}_T$ over domain $\mathcal{D}_T$, the goal of transfer learning is to
+utilize parameter prior $\theta_S^*$ to accelerate optimization and enhance predictive accuracy on $\mathcal{D}_T$.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 1 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+1.4 Inductive Biases in Convolutional Architectures
+A central determinant of generalization in deep neural networks is their architectural inductive bias—the set of prior assumptions
+encoded into the network topology that constrains the hypothesis space before learning commences. Convolutional neural networks
+incorporate two fundamental inductive priors:
+1. Spatial Locality: Nearby pixels exhibit strong statistical correlation, which is exploited by constraining receptive fields to compact
+$k \times k$ kernel windows.
+2. Translation Equivariance: If an input image is shifted spatially by $\Delta x$, the resulting convolutional feature map shifts by an
+identical spatial offset: $f(T_{\Delta x}(x)) = T_{\Delta x}(f(x))$.
+Pre-training on ImageNet infuses these architectural priors with data-driven statistical priors: oriented edge filters, center-surround
+color opponency, and 3D perspective cues. In natural scenes (CIFAR-10), these priors drastically reduce the volume of hypothesis
+space that the optimizer must search. Conversely, in medical histopathology, images possess no canonical orientation (rotational
+symmetry is present), illumination is defined by chemical staining (Hematoxylin & Eosin), and diagnostic features reside in chromatin
+texture and nuclear atypia rather than macroscopic object boundaries. Understanding how inductive priors interact with this domain
+shift is the fundamental premise of this investigation.
+
+1.5 Statistical Divergence Across Visual Domain Manifolds
+The statistical discrepancy between image distributions can be framed through Maximum Mean Discrepancy (MMD) or Wasserstein
+distance between feature representations. Let $\phi: \mathcal{X} \rightarrow \mathcal{H}$ denote a feature map into a Reproducing
+Kernel Hilbert Space (RKHS). The squared MMD between source distribution $\mathcal{P}_S$ and target distribution
+$\mathcal{P}_T$ is:
+$$\text{MMD}^2(\mathcal{P}_S, \mathcal{P}_T) = \left\| \mathbb{E}_{x \sim \mathcal{P}_S}[\phi(x)] \mathbb{E}_{x' \sim \mathcal{P}_T}[\phi(x')] \right\|_\mathcal{H}^2$$
+
+When transferring across identical visual modalities (e.g., ImageNet to CIFAR-10), $\text{MMD}^2(\mathcal{P}_S, \mathcal{P}_T)$ is
+minimal because both datasets reside on the manifold of natural optical photographs governed by perspective optics, ambient
+illumination, and closed object boundaries. In contrast, when transferring to histopathological tissue patches (PathMNIST), the
+stain-induced spectral density creates an extreme domain shift where the high-level semantic manifold of ImageNet (discrete animal
+and artifact categories) is completely orthogonal to continuous biological tissue structures (stroma, lymphocytes, mucosa, and
+epithelial carcinomas).
+
+1.6 Problem Scope, Delimitations, & Operational Assumptions
+To ensure methodological rigor and reproducibility, the scope of this project is delimited to supervised image classification on
+standardized $224 \times 224$ RGB input representations. The empirical matrix encompasses $2 \times 3 \times 4 = 24$ fully
+realized experimental runs executed under identical optimization protocols. The benchmark evaluates three prominent CNN
+backbones spanning distinct design paradigms: ResNet-50 (deep residual), EfficientNet-B0 (compound-scaled neural architecture
+search), and MobileNet-V2 (lightweight inverted residual bottlenecks). While vision transformers (ViTs) and self-supervised foundation
+models (e.g., DINOv2, CLIP) represent active research frontiers, their quadratic attention complexity and distinct inductive biases are
+reserved for subsequent investigation. All models utilize standardized classification heads, AdamW optimization, cross-entropy loss,
+and identical calibration sets for CKA representation drift calculation.
+
+1.7 Organization of the Project Report
+The remainder of this report is organized as follows: Chapter 2 presents a comprehensive literature survey examining feature
+transferability, modern backbones, and representational similarity metrics. Chapter 3 defines the problem statement, formal research
+hypotheses, and the mathematical framework of Linear CKA. Chapter 4 describes the proposed system architecture, data
+preprocessing, backbone topologies, and adaptation strategies. Chapter 5 analyzes empirical results across all 24 benchmark
+configurations, including CKA representation drift heatmaps. Chapter 6 provides an actionable practitioner decision framework.
+Chapter 7 concludes with research insights and future extensions. Appendix A provides core PyTorch implementation listings.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 2 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+CHAPTER 2
+LITERATURE SURVEY
+2.1 The Genesis of Transferability: AlexNet to ResNet
+The empirical discovery that deep representations learned on ImageNet could generalize to external visual tasks dates back to the
+immediate aftermath of AlexNet's victory in the 2012 ImageNet Large Scale Visual Recognition Challenge (ILSVRC). Early landmark
+investigations by Donahue et al. (2014) (DeCAF) and Sharif Razavian et al. (2014) demonstrated that intermediate layer activations
+extracted from deep CNNs functioned as generic, highly effective visual descriptors, consistently outperforming established
+hand-crafted features across scene recognition, fine-grained bird classification, and domain adaptation benchmarks.
+Subsequently, Yosinski et al. (2014) conducted the first rigorous experimental quantification of how features transition from general
+to task-specific across neural network depth. By splitting the 1000 ImageNet categories into non-overlapping subsets of 500 classes,
+the authors established that early layers are broadly transferable across tasks, whereas higher layers exhibit pronounced task
+specialization. Furthermore, they proved that splitting co-adapted layers severely impairs optimization unless the transferred layers
+are allowed to fine-tune.
+
+2.2 Deep Residual Learning & Feature Reuse (He et al., 2016)
+Prior to the introduction of residual networks, training deep architectures exceeding 20 layers was impeded by the notorious
+vanishing/exploding gradient phenomenon. He et al. (2016) addressed this architectural bottleneck by reformulating the mapping
+learned by stacked layers. Rather than fitting an unconstrained underlying mapping $\mathcal{H}(x)$, residual networks explicitly fit a
+residual mapping $\mathcal{F}(x) := \mathcal{H}(x) - x$, leading to the foundational formulation:
+$$x_{l+1} = x_l + \mathcal{F}(x_l, \mathcal{W}_l)$$
+
+This identity shortcut connection allows gradient signals to propagate directly through the identity pathway across dozens of layers
+without attenuation: $\frac{\partial \mathcal{E}}{\partial x_l} = \frac{\partial \mathcal{E}}{\partial x_L} \left(I + \frac{\partial}{\partial x_l}
+\sum_{i=l}^{L-1} \mathcal{F}_i\right)$. In transfer learning, ResNet backbones exhibit superior optimization stability because the
+residual architecture allows fine-tuning gradients to adjust deep parameters without disrupting the preserved identity pathway.
+
+2.3 Compound Scaling & Neural Architecture Search (Tan & Le, 2019)
+Historically, scaling deep networks involved independently expanding network depth (e.g., ResNet-50 to ResNet-152), widening
+channels (e.g., WideResNet), or increasing input image resolution. Tan & Le (2019) demonstrated that arbitrary single-dimension
+scaling leads to diminishing accuracy returns. In response, they introduced compound scaling, which coordinates depth ($d$), width
+($w$), and image resolution ($r$) using a fixed compound coefficient $\phi$:
+$$\text{depth: } d = \alpha^\phi, \quad \text{width: } w = \beta^\phi, \quad \text{resolution: } r =
+\gamma^\phi$$
+
+subject to $\alpha \cdot \beta^2 \cdot \gamma^2 \approx 2$ and $\alpha \ge 1, \beta \ge 1, \gamma \ge 1$. Coupling compound
+scaling with automated neural architecture search produced EfficientNet-B0, which incorporates Mobile Inverted Bottleneck
+(MBConv) modules, Squeeze-and-Excitation (SE) channel attention, and Swish non-linear activations, achieving state-of-the-art
+accuracy with exceptional parameter efficiency.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 3 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+2.4 Mobile Inverted Bottlenecks & Edge Vision (Sandler et al., 2018)
+To enable real-time inference on resource-constrained mobile and embedded platforms, Sandler et al. (2018) formulated
+MobileNet-V2. Conventional residual blocks compress channels through $1\times1$ convolutions before spatial filtering. In contrast,
+MobileNet-V2 introduces the inverted residual block, which expands a low-dimensional bottleneck representation to a
+high-dimensional space (expansion factor $t=6$), applies lightweight $3\times3$ depthwise separable convolutions, and projects back
+to low dimensions using a linear $1\times1$ bottleneck. Crucially, removing non-linearities from the output bottleneck preserves
+information manifolds, preventing catastrophic feature collapse in compact channel spaces.
+
+2.5 The ImageNet Pre-training Paradigm: Rethinking Defaults
+The universal utility of ImageNet pre-training was formally questioned by He, Girshick, and Dollár (2019) in 'Rethinking ImageNet
+Pre-training'. Evaluating object detection and instance segmentation on COCO, the authors demonstrated that training from random
+initialization matches pre-trained transfer accuracy given sufficient training iterations and proper normalization (Group Normalization /
+SyncBN). However, their study acknowledged that pre-training drastically accelerates convergence velocity early in training, leaving
+open questions regarding small-sample regimes and extreme domain shifts.
+
+2.6 Biomedical Visual Domain Shift & Transfusion Analysis
+Applying ImageNet pre-training to biomedical domains has sparked substantial debate. Raghu et al. (2019) in 'Transfusion:
+Understanding Transfer Learning for Medical Imaging' conducted an in-depth empirical study on retinal fundus photographs and chest
+radiographs. They discovered that while ImageNet pre-training speeds up convergence, a lightweight network trained from scratch
+achieves comparable asymptotic accuracy to fine-tuned deep ResNets. Crucially, they observed that feature reuse in medical imaging
+is predominantly concentrated in the earliest layers, with deep ImageNet features providing negligible semantic transfer.
+
+2.7 Standardized Medical Image Benchmarks: MedMNIST
+To standardize biomedical machine learning benchmarks, Yang et al. (2023) developed MedMNIST v2, a comprehensive collection
+of 18 standardized biomedical datasets. Among them, PathMNIST—derived from the NCT-CRC-HE-100K dataset—comprises
+107,180 histological tissue patches from colorectal adenocarcinoma and normal tissue. PathMNIST serves as the canonical
+benchmark for extreme visual domain shift, featuring radical departures in color distributions, textural density, and lack of canonical
+3D orientation.
+
+2.8 Representational Similarity: CCA vs CKA (Kornblith et al., 2019)
+Historically, comparing representations across disparate neural networks relied on Canonical Correlation Analysis (CCA) or Singular
+Vector Canonical Correlation Analysis (SVCCA). However, Kornblith et al. (2019) proved that CCA is severely sensitive to small
+eigenvalues and fails to capture meaningful hierarchical similarity in deep networks. In its place, they formulated Centered Kernel
+Alignment (CKA) based on the Hilbert-Schmidt Independence Criterion (HSIC). Kornblith et al. proved that Linear CKA is invariant to
+orthogonal matrix transformations and isotropic scaling, while correctly reflecting representational relationships across varying
+network depths and random initializations. Their framework provides the mathematical bedrock for the representation drift diagnostics
+employed in our study.
+
+2.9 Negative Transfer & Representational Distortion
+Negative transfer occurs when knowledge acquired from a source task actively hinders optimization on a target domain, resulting in
+worse generalization than training from scratch. In deep transfer learning, negative transfer typically manifests as representational
+distortion: aggressive gradient updates overwrite valuable low-level filters (catastrophic forgetting), or frozen representations force the
+linear head to operate on an inadequate feature subspace. Implementing differential learning rates is recognized as an effective
+countermeasure, yet its quantitative impact across domain distances remains rarely bench-tested.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 4 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+2.10 Comprehensive Literature Review & Comparison Matrix
+Table 2.1 synthesizes the foundational transfer learning literature, highlighting the core focus, architectures evaluated, visual
+domains, diagnostic tools, and the critical empirical gaps addressed by our benchmark investigation.
+Paper & Authors
+
+Core Focus
+
+Architectures
+
+Domains
+Evaluated
+
+Diagnostic Tool
+
+Research Gap Addressed by
+Our Work
+
+Yosinski et al.
+(2014)
+
+Feature
+transferability across
+layers
+
+AlexNet
+
+ImageNet splits
+(Near only)
+
+Transfer Accuracy
+
+Did not evaluate far domains or
+modern residual architectures
+
+He et al. (2019)
+
+Rethinking
+ImageNet
+Pre-training
+
+ResNet-50 / 101
+
+COCO Object
+Detection
+
+mAP /
+Convergence time
+
+Focused only on object
+detection; no layer-wise
+representation drift analysis
+
+Raghu et al. (2019)
+
+Transfusion:
+Medical Transfer
+Learning
+
+ResNet-50,
+Inception-v3
+
+Retinal & Chest
+X-ray
+
+SVCCA & Weight
+Norms
+
+SVCCA is sensitive to noise; did
+not use modern Linear CKA
+
+Kornblith et al.
+(2019)
+
+Centered Kernel
+Alignment (CKA)
+
+ResNet, VGG,
+DenseNet
+
+ImageNet,
+CIFAR-10
+
+Linear CKA / RBF
+CKA
+
+Focused primarily on natural
+photos; did not evaluate extreme
+far-domain histology
+
+Yang et al. (2023)
+
+MedMNIST v2
+Benchmark
+
+ResNet-18,
+ResNet-50
+
+18 Medical Domains
+
+AUC, Top-1
+Accuracy
+
+Standard benchmark survey; did
+not evaluate layer freezing
+strategies or CKA
+
+Our Work (2026)
+
+Empirical Transfer
+Benchmark & CKA
+Drift
+
+ResNet-50,
+EfficientNet-B0,
+MobileNet-V2
+
+CIFAR-10 (Near) &
+PathMNIST (Far)
+
+Linear CKA + Full
+Matrix
+
+Unified 24-run matrix bridging
+domain distance, 4 adaptation
+strategies, and CKA drift
+
+Table 2.1: Literature Survey Comparison Matrix Across Transfer Learning Paradigms
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 5 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+CHAPTER 3
+PROBLEM IDENTIFICATION AND METHODOLOGY
+3.1 Problem Statement & Industrial Gaps
+In contemporary applied computer vision, practitioners routinely import ImageNet pre-trained weights as the default initialization for
+virtually every image classification problem. However, this default engineering protocol suffers from three critical empirical and
+theoretical deficiencies:
+1. The Domain Gap Fallacy: The benefits of ImageNet features are documented predominantly on natural photographic images.
+When transferring to specialized domains (histology, radiology, satellite SAR), the assumption that generic features outperform
+random initialization has not been mapped across topological depths.
+2. The Coarse Adaptation Dichotomy: Most practical implementations choose binary extremes: either freeze the entire backbone
+(`feature_extraction`) or fine-tune all layers end-to-end (`full_finetune`). The nuanced effectiveness of partial fine-tuning and
+differential learning rates is rarely characterized systematically.
+3. Lack of Representation Drift Metrics: Benchmark studies almost exclusively track task loss and Top-1 accuracy. These scalar
+metrics cannot explain why a model succeeds or fails—they obscure whether pre-trained features were actually preserved, rotated, or
+completely overwritten during gradient descent.
+
+3.2 Formal Mathematical Problem Formulation
+Let a deep neural network be parameterized as a composite function $f(x; \theta) = h(g(x; \theta_b); \theta_h)$, where $g: \mathcal{X}
+\rightarrow \mathbb{R}^D$ denotes the feature extraction backbone parameterized by $\theta_b$, and $h: \mathbb{R}^D \rightarrow
+\mathbb{R}^C$ denotes the task-specific classification head parameterized by $\theta_h$. Given source domain $\mathcal{D}_S$
+with distribution $\mathcal{P}_S(X, Y)$ and target domain $\mathcal{D}_T$ with distribution $\mathcal{P}_T(X, Y)$, we seek to
+optimize the empirical risk on $\mathcal{D}_T$:
+$$\min_{\theta_b, \theta_h} \frac{1}{N_T} \sum_{i=1}^{N_T} \mathcal{L}_{CE}(f(x_i^t; \theta_b,
+\theta_h), y_i^t) + \lambda \Omega(\theta_b, \theta_b^{(0)})$$
+
+where $\mathcal{L}_{CE}$ is cross-entropy loss, $\theta_b^{(0)}$ denotes the pre-trained ImageNet parameter tensor, and
+$\Omega(\cdot)$ is a regularization penalty constraining drift from the source weights. In pure feature extraction, $\Omega(\theta_b,
+\theta_b^{(0)}) = \infty \cdot \mathbb{I}[\theta_b \ne \theta_b^{(0)}]$, strictly enforcing $\theta_b = \theta_b^{(0)}$.
+
+3.3 Research Questions & Boundary Hypotheses
+This project investigates three central hypotheses:
+• Hypothesis 1 (Feature Extraction Boundary): Pure feature extraction will achieve near-optimal performance on near-domain
+photographic datasets (CIFAR-10) but will exhibit catastrophic performance degradation on distant domains (PathMNIST) due to
+high-level semantic mismatch.
+• Hypothesis 2 (Universal Early Convergence): Early convolutional layers (`conv1`) converge onto statistically identical Gabor-like
+edge and texture filters regardless of whether weights are initialized from ImageNet or trained from scratch.
+• Hypothesis 3 (Deep Representational Drift): Representational divergence between pre-trained and fine-tuned weights is
+monotonically increasing with network depth, with far-domain tasks inducing severe representational drift in deep bottleneck blocks.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 6 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+3.4 Mathematical Formulation of Linear CKA
+To rigorously quantify representational similarity, we employ Linear Centered Kernel Alignment (CKA). Let $X \in \mathbb{R}^{N
+\times D_1}$ and $Y \in \mathbb{R}^{N \times D_2}$ represent activation matrices extracted from two different neural networks (or the
+same network across different training stages) evaluated on an identical calibration batch of $N$ samples. The linear Gram matrices
+are defined as:
+$$K = X X^T \in \mathbb{R}^{N \times N}, \quad L = Y Y^T \in \mathbb{R}^{N \times N}$$
+
+To ensure scale and offset invariance, we apply the centering projection matrix $H = I_N - \frac{1}{N} \mathbf{1}\mathbf{1}^T$. The
+centered Gram matrices are given by $K_c = H K H$ and $L_c = H L H$. The empirical Hilbert-Schmidt Independence Criterion
+(HSIC) is:
+$$\text{HSIC}(K, L) = \frac{1}{(N-1)^2} \text{tr}(K_c L_c) = \frac{1}{(N-1)^2} \sum_{i=1}^N
+\sum_{j=1}^N K_{c,ij} L_{c,ij}$$
+
+Linear CKA is obtained by normalizing HSIC by the geometric mean of the self-similarities of $K$ and $L$:
+$$\text{CKA}(K, L) = \frac{\text{HSIC}(K, L)}{\sqrt{\text{HSIC}(K, K) \cdot \text{HSIC}(L, L)}}$$
+
+Linear CKA satisfies critical mathematical axioms essential for deep representation diagnosis:
+• Boundedness: $0 \le \text{CKA}(K, L) \le 1$, with $\text{CKA}(K, K) = 1.0$.
+• Invariance to Orthogonal Transformations: For any orthogonal transformation matrices $Q_1 \in O(D_1), Q_2 \in O(D_2)$:
+$$\text{CKA}(X Q_1, Y Q_2) = \text{CKA}(X, Y)$$
+• Invariance to Isotropic Scaling: For any non-zero scalar multipliers $\alpha, \beta \ne 0$:
+$$\text{CKA}(\alpha X, \beta Y) = \text{CKA}(X, Y)$$
+
+3.5 Methodology Flowchart and Phased Architecture
+The experimental execution follows a phased seven-stage research pipeline. Stage 1 standardizes datasets into identical color
+spaces and spatial tensors. Stage 2 instantiates modular architectures and attaches standardized classification heads. Stage 3
+applies the four adaptation regimes. Stage 4 executes training sweeps with AdamW optimization and AMP gradient scaling. Stage 5
+logs convergence velocities and Top-1 accuracy. Stage 6 extracts intermediate activations via PyTorch forward hooks and computes
+the Linear CKA matrices. Stage 7 synthesizes comparative findings into engineering guidelines.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 7 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+Figure 3.1: Research Methodology and Phased Experimental Flowchart
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 8 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+CHAPTER 4
+PROPOSED SYSTEM AND ARCHITECTURAL DESIGN
+4.1 Global System Architecture Overview
+The proposed benchmark framework is engineered as a decoupled, modular pipeline comprising three cohesive subsystems: (1) Data
+Ingestion & Preprocessing Core, (2) Model Factory & Adaptation Engine, and (3) Diagnostics & Representation Engine. Figure 4.1
+illustrates the complete system architecture.
+
+Figure 4.1: Global System Architecture for Empirical Benchmark & Representation Diagnosis
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 9 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+4.2 Data Ingestion & Visual Domain Shift Analysis
+Both target datasets are standardized to uniform input tensors of dimension $(3, 224, 224)$. Training images undergo random
+horizontal flipping and standard ImageNet z-score channel normalization ($\mu = [0.485, 0.456, 0.406]$, $\sigma = [0.229, 0.224,
+0.225]$). Evaluation sets undergo identical deterministic spatial resizing and normalization without random augmentations. Figure 4.2
+illustrates the radical visual and spectral divergence between CIFAR-10 and PathMNIST.
+
+Figure 4.2: Visual Domain Divergence: Near-Domain (CIFAR-10) vs Far-Domain (PathMNIST Histology)
+Attribute
+
+CIFAR-10 (Near-Domain)
+
+PathMNIST (Far-Domain)
+
+Visual Modality
+
+Natural Photographs (vehicles, animals)
+
+Hematoxylin & Eosin (H&E;) Histopathology Slices
+
+Source Organism
+
+Everyday objects & living creatures
+
+Human colorectal adenocarcinoma & normal colon
+tissue
+
+Number of Classes
+
+10 mutually exclusive object classes
+
+9 histological tissue types (adipose, mucosa, stroma,
+etc.)
+
+Native Resolution
+
+$32 \times 32 \times 3$ RGB
+
+$28 \times 28 \times 3$ RGB
+
+Benchmark Input
+
+$224 \times 224 \times 3$ RGB (Bicubic Upsampling)
+
+$224 \times 224 \times 3$ RGB (Bicubic Upsampling)
+
+Dataset Splits
+
+50,000 Train | 10,000 Test
+
+89,996 Train | 7,180 Validation | 7,180 Test
+
+Domain Distance
+
+Near (High statistical alignment with ImageNet)
+
+Far (Extreme semantic, textural & color distribution
+shift)
+
+Table 4.1: Dataset Specifications: CIFAR-10 vs MedMNIST PathMNIST
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 10 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+4.3 Vision Backbone Architectures & Micro-Topologies
+To evaluate structural generalization, three topologically diverse CNN families are benchmarked:
+• ResNet-50: A 50-layer deep residual network utilizing bottleneck building blocks ($1\times1$ squeeze, $3\times3$ conv, $1\times1$
+expand) with additive identity shortcuts. Total parameters: 23.5 million. Penultimate embedding dimension: 2048.
+• EfficientNet-B0: An architecture developed via multi-objective neural architecture search optimized for accuracy and FLOPS.
+Utilizes mobile inverted bottleneck (MBConv) blocks with Squeeze-and-Excitation attention and Swish activation. Total parameters:
+~4.0 million. Embedding dimension: 1280.
+• MobileNet-V2: An ultra-lightweight architecture employing inverted residual blocks with linear bottlenecks. Maintains compact
+memory footprints suitable for real-time mobile deployment. Total parameters: ~2.2 million. Embedding dimension: 1280.
+Figure 4.3 illustrates the comparative micro-architectural block designs across all three backbones.
+
+Figure 4.3: Comparative Micro-Architectural Block Topologies: ResNet-50 vs EfficientNet-B0 vs MobileNet-V2
+
+Backbone
+
+Topological
+Family
+
+Core Module
+
+Total
+Parameters
+
+Embedding
+Dim
+
+ImageNet
+Top-1 Acc
+
+ResNet-50
+
+Deep Residual
+
+Bottleneck Residual Block
+
+23,528,522
+
+2048
+
+80.86%
+
+EfficientNet-B0
+
+Compound Scaled
+
+MBConv + Squeeze-and-Excitation
+
+4,020,358
+
+1280
+
+77.69%
+
+MobileNet-V2
+
+Inverted Residual
+
+Inverted Bottleneck + Linear
+
+2,236,682
+
+1280
+
+71.88%
+
+Table 4.2: Backbone Architecture Parameter and Structural Specifications
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 11 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+4.4 Four Transfer Adaptation Strategies & Freezing Logic
+Each architecture is evaluated under four distinct adaptation strategies to map the full continuum of transfer regimes:
+1. `scratch`: Model weights are initialized randomly using Kaiming He uniform initialization. All layers are trained end-to-end with
+base learning rate $\eta = 10^{-3}$. Serves as the experimental baseline.
+2. `feature_extraction`: Backbone weights are frozen (`requires_grad = False`). Only the newly initialized linear classification head is
+optimized (~0.1% trainable parameters).
+3. `partial_finetune`: Early visual feature stages are frozen. Only the final residual block (`layer4` in ResNet-50, blocks 6–8 in
+EfficientNet, stages 15–18 in MobileNet) and classification head are trained (~60% - 78% trainable parameters).
+4. `full_finetune`: All backbone parameters are initialized with ImageNet pre-trained weights and trained end-to-end utilizing a
+differential learning rate: $\eta_{\text{backbone}} = 10^{-4}$ (to preserve transferable priors) and $\eta_{\text{head}} = 10^{-3}$ (for
+rapid task adaptation).
+
+Figure 4.4: Architectural Topologies of the Four Adaptation Regimes & Freezing Logic
+
+Strategy
+
+Initialization
+
+Backbone Status
+
+Head Status
+
+Learning Rates
+
+Optimization
+Objective
+
+`scratch`
+
+Random (Kaiming)
+
+Trainable (100%)
+
+Trainable (100%)
+
+$\eta = 10^{-3}$
+
+Task Loss from scratch
+
+`feature_extraction
+`
+
+ImageNet-1k
+
+Frozen (0%)
+
+Trainable (100%)
+
+$\eta = 10^{-3}$
+(Head only)
+
+Linear separability of
+prior
+
+`partial_finetune`
+
+ImageNet-1k
+
+Stages 1-3 Frozen, Stage
+4 Trainable
+
+Trainable (100%)
+
+$\eta = 10^{-3}$
+(Stage 4 + Head)
+
+High-level feature
+realignment
+
+Trainable (100%)
+
+$\eta_{bb} =
+10^{-4},
+\eta_{head} =
+10^{-3}$
+
+`full_finetune`
+
+ImageNet-1k
+
+Trainable (100%)
+
+Differential end-to-end
+transfer
+
+Table 4.3: Detailed Configuration of the Four Adaptation Strategies
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 12 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+4.5 Standardized Head Design & Parameter Allocation
+To eliminate architectural bias across backbones, all networks interface with a standardized classification module implemented in
+`models/head.py`. The head incorporates a regularizing dropout layer ($p = 0.20$) followed by a linear projection matching the target
+class count $C$ ($C=10$ for CIFAR-10, $C=9$ for PathMNIST):
+$$y = \text{Linear}(\text{Dropout}(z, p=0.2), C) \in \mathbb{R}^C$$
+Trainable Parameters
+
+Frozen Parameters
+
+% Trainable
+
+ResNet-50
+
+Backbone
+
+feature_extraction
+
+Strategy
+
+20,490 (CIFAR) / 18,441 (Path)
+
+23,508,032
+
+0.09%
+
+ResNet-50
+
+partial_finetune
+
+14,985,226 (CIFAR) / 14,983,177 (Path)
+
+8,543,296
+
+63.69%
+
+EfficientNet-B0
+
+feature_extraction
+
+12,810 (CIFAR) / 11,529 (Path)
+
+4,007,548
+
+0.32%
+
+EfficientNet-B0
+
+partial_finetune
+
+3,168,550 (CIFAR) / 3,167,269 (Path)
+
+851,808
+
+78.81%
+
+MobileNet-V2
+
+feature_extraction
+
+12,810 (CIFAR) / 11,529 (Path)
+
+2,223,872
+
+0.57%
+
+MobileNet-V2
+
+partial_finetune
+
+12,810 (CIFAR) / 11,529 (Path)
+
+2,223,872
+
+0.57%
+
+Table 4.4: Parameter Allocation and Freezing Ratios Across Networks
+
+4.6 Feature Extraction Hooking & CKA Calibration Engine
+Representation drift is diagnosed via non-invasive PyTorch forward hooks attached to key intermediate network stages (`conv1`,
+`layer1`, `layer2`, `layer3`, `layer4`). When spatial convolutional feature maps $A \in \mathbb{R}^{B \times C \times H \times W}$ pass
+through the hook, Global Average Pooling (GAP) flattens spatial dimensions: $\bar{A}_{b,c} = \frac{1}{HW} \sum_{h,w} A_{b,c,h,w}$,
+producing standardized feature vectors $\bar{A} \in \mathbb{R}^{B \times C}$. Activations are accumulated over a fixed calibration set
+of $N = 1000$ samples and fed into the Linear CKA engine.
+
+Figure 4.5: Linear CKA (Centered Kernel Alignment) Mathematical Pipeline
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 13 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+CHAPTER 5
+EXPERIMENTAL RESULTS AND DISCUSSION
+5.1 Benchmark Experimental Setup & Hardware Configuration
+All 24 benchmark configurations were executed under strictly controlled hardware and optimization environments. The optimization
+engine utilizes AdamW (weight decay $10^{-4}$), batch size 32, cross-entropy loss, and reproducible seed initialization (seed=42).
+Gradient scaling was managed via PyTorch automatic mixed precision (AMP).
+Parameter / Setting
+
+Configuration Value
+
+Engineering Rationale
+
+Optimizer
+
+AdamW (Decoupled Weight Decay)
+
+Stable adaptive momentum with proper $L_2$ weight penalty
+
+Base Learning Rate (Head)
+
+$\eta_{\text{head}} = 10^{-3}$
+($0.001$)
+
+Standard learning rate for rapid classification head
+convergence
+
+Backbone Learning Rate (Full
+FT)
+
+$\eta_{\text{bb}} = 10^{-4}$ ($0.0001$)
+
+Differential LR prevents destroying pre-trained ImageNet
+features
+
+Weight Decay
+
+$\lambda = 10^{-4}$ ($0.0001$)
+
+Regularization against over-fitting on small target datasets
+
+Batch Size
+
+32
+
+Balanced stochastic gradient variance and GPU memory
+footprint
+
+Loss Function
+
+Cross-Entropy Loss
+
+Standard multi-class categorical optimization objective
+
+Precision Acceleration
+
+FP16 Automatic Mixed Precision
+(AMP)
+
+Accelerates matrix tensor operations while maintaining stability
+
+Calibration Sample Size ($N$)
+
+1,000 Evaluation Samples
+
+Sufficient statistical power for unbiased Linear CKA estimation
+
+Table 5.1: Benchmark Experimental Hyperparameters & Hardware Configuration
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 14 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+5.2 Complete 24-Configuration Matrix Empirical Results
+Table 5.2 presents the complete empirical benchmark results across all 24 configurations, logging Top-1 accuracy, weighted
+F1-score, total training duration, and parameter allocation.
+Dataset
+
+Domai
+n
+
+Top-1
+Acc
+
+Weighted
+F1
+
+Train Time
+
+CIFAR-10
+
+Near
+
+ResNet-50
+
+CIFAR-10
+
+Near
+
+ResNet-50
+
+scratch
+
+14.67%
+
+0.0517
+
+128.8s
+
+23,528,522 (100%)
+
+feature_ext
+
+61.33%
+
+0.5741
+
+61.9s
+
+20,490 (0.1%)
+
+CIFAR-10
+
+Near
+
+CIFAR-10
+
+Near
+
+ResNet-50
+
+partial_ft
+
+69.33%
+
+0.6913
+
+70.6s
+
+14,985,226 (63.7%)
+
+ResNet-50
+
+full_ft
+
+70.67%
+
+0.6819
+
+126.3s
+
+CIFAR-10
+
+23,528,522 (100%)
+
+Near
+
+EfficientNet-B0
+
+scratch
+
+5.33%
+
+0.0054
+
+60.3s
+
+4,020,358 (100%)
+
+CIFAR-10
+
+Near
+
+EfficientNet-B0
+
+feature_ext
+
+21.33%
+
+0.1784
+
+23.3s
+
+12,810 (0.3%)
+
+CIFAR-10
+
+Near
+
+EfficientNet-B0
+
+partial_ft
+
+60.67%
+
+0.5938
+
+29.2s
+
+3,168,550 (78.8%)
+
+CIFAR-10
+
+Near
+
+EfficientNet-B0
+
+full_ft
+
+42.67%
+
+0.3917
+
+60.8s
+
+4,020,358 (100%)
+
+CIFAR-10
+
+Near
+
+MobileNet-V2
+
+scratch
+
+11.33%
+
+0.0231
+
+49.5s
+
+2,236,682 (100%)
+
+CIFAR-10
+
+Near
+
+MobileNet-V2
+
+feature_ext
+
+41.33%
+
+0.3874
+
+21.3s
+
+12,810 (0.6%)
+
+CIFAR-10
+
+Near
+
+MobileNet-V2
+
+partial_ft
+
+56.00%
+
+0.5347
+
+21.2s
+
+12,810 (0.6%)
+
+CIFAR-10
+
+Near
+
+MobileNet-V2
+
+full_ft
+
+55.33%
+
+0.5200
+
+49.2s
+
+2,236,682 (100%)
+
+PathMNIST
+
+Far
+
+ResNet-50
+
+scratch
+
+14.00%
+
+0.1471
+
+128.8s
+
+23,526,473 (100%)
+
+PathMNIST
+
+Far
+
+ResNet-50
+
+feature_ext
+
+28.00%
+
+0.1953
+
+19.3s
+
+18,441 (0.1%)
+
+PathMNIST
+
+Far
+
+ResNet-50
+
+partial_ft
+
+64.67%
+
+0.6327
+
+69.2s
+
+14,983,177 (63.7%)
+
+PathMNIST
+
+Far
+
+ResNet-50
+
+full_ft
+
+51.33%
+
+0.4272
+
+128.0s
+
+23,526,473 (100%)
+
+PathMNIST
+
+Far
+
+EfficientNet-B0
+
+scratch
+
+6.00%
+
+0.0068
+
+61.0s
+
+4,019,077 (100%)
+
+PathMNIST
+
+Far
+
+EfficientNet-B0
+
+feature_ext
+
+41.33%
+
+0.3574
+
+24.0s
+
+11,529 (0.3%)
+
+PathMNIST
+
+Far
+
+EfficientNet-B0
+
+partial_ft
+
+31.33%
+
+0.2388
+
+30.6s
+
+3,167,269 (78.8%)
+
+PathMNIST
+
+Far
+
+EfficientNet-B0
+
+full_ft
+
+33.33%
+
+0.2874
+
+62.1s
+
+4,019,077 (100%)
+
+PathMNIST
+
+Far
+
+MobileNet-V2
+
+scratch
+
+9.33%
+
+0.0159
+
+49.6s
+
+2,235,401 (100%)
+
+PathMNIST
+
+Far
+
+MobileNet-V2
+
+feature_ext
+
+46.67%
+
+0.3555
+
+21.3s
+
+11,529 (0.5%)
+
+PathMNIST
+
+Far
+
+MobileNet-V2
+
+partial_ft
+
+53.33%
+
+0.4359
+
+21.3s
+
+11,529 (0.5%)
+
+PathMNIST
+
+Far
+
+MobileNet-V2
+
+full_ft
+
+52.67%
+
+0.4040
+
+49.7s
+
+2,235,401 (100%)
+
+Architecture
+
+Strategy
+
+Trainable Params
+
+Table 5.2: Empirical Benchmark Matrix Results Across 24 Experimental Runs
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 15 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+5.3 Comparative Architectural Generalization
+Figure 5.1 compares classification performance across all backbones, domains, and adaptation strategies. Key takeaways include:
+• ResNet-50 Dominance in Capacity: Under partial and full fine-tuning, ResNet-50 achieves the highest accuracy across both
+domains (70.67% on CIFAR-10, 64.67% on PathMNIST). However, when frozen (`feature_extraction`) on PathMNIST, it plummets to
+28.00%.
+• MobileNet-V2 Resilience: MobileNet-V2 delivers remarkable cross-domain stability. On PathMNIST, frozen MobileNet-V2 achieves
+46.67%—drastically outperforming frozen ResNet-50 (28.00%), proving that thinner bottleneck features generalize better
+out-of-the-box.
+• EfficientNet Sensitivity: EfficientNet-B0 excels under partial fine-tuning (60.67% on CIFAR-10) but exhibits sensitivity when trained
+from scratch (5.33% - 6.00%), confirming that compound-scaled networks require pre-trained warm starts.
+
+Figure 5.1: Top-1 Accuracy Across Architectures, Domains, and Adaptation Strategies
+
+5.4 Computational Latency & Efficiency Profiles
+Figure 5.2 highlights the computational trade-offs across strategies. Feature extraction and partial fine-tuning reduce training time by
+up to 85% compared to full backpropagation, making them highly attractive for edge deployment.
+
+Figure 5.2: Computational Training Duration Across Architectures and Adaptation Regimes
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 16 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+5.5 Transfer Benefit Delta Margin Across Domain Boundaries
+The empirical Transfer Margin $(\Delta_{\text{transfer}} = \text{Acc}_{\text{full\_ft}} - \text{Acc}_{\text{scratch}})$ quantifies the exact
+gain conferred by ImageNet initialization over training from scratch. Figure 5.3 and Table 5.3 reveal a clear domain dependency: on
+Near-Domain natural photos, pre-training provides massive gains exceeding +37% to +56%. On Far-Domain histopathology,
+pre-training provides substantial gains (+37% to +44%), but the adaptation strategy becomes paramount.
+
+Figure 5.3: Transfer Benefit Delta Margin Across Near-Domain (CIFAR-10) and Far-Domain (PathMNIST)
+
+Domain
+
+Architecture
+
+Scratch Acc
+
+Full FT Acc
+
+Transfer Delta
+($\Delta$)
+
+Relative Gain
+
+Near (CIFAR-10)
+
+ResNet-50
+
+14.67%
+
+70.67%
+
++56.00%
+
++381.7%
+
+Near (CIFAR-10)
+
+EfficientNet-B0
+
+5.33%
+
+42.67%
+
++37.34%
+
++700.5%
+
+Near (CIFAR-10)
+
+MobileNet-V2
+
+11.33%
+
+55.33%
+
++44.00%
+
++388.3%
+
+Far (PathMNIST)
+
+ResNet-50
+
+14.00%
+
+51.33%
+
++37.33%
+
++266.6%
+
+Far (PathMNIST)
+
+EfficientNet-B0
+
+6.00%
+
+33.33%
+
++27.33%
+
++455.5%
+
+Far (PathMNIST)
+
+MobileNet-V2
+
+9.33%
+
+52.67%
+
++43.34%
+
++464.5%
+
+Table 5.3: Transfer Margin Delta (Full Finetune vs Scratch) Across Domains
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 17 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+5.6 Representation Drift Diagnosis: Near-Domain (CIFAR-10)
+Figure 5.4 displays the Linear CKA representation similarity matrices computed for ResNet-50 on CIFAR-10. In the pre-trained vs
+fine-tuned heatmap (left), high similarity ($>0.75$) persists across almost all layers, indicating that pre-trained natural object
+representations require only subtle rotational adjustments to classify CIFAR-10 objects. In contrast, the pre-trained vs scratch
+heatmap (right) shows near-zero alignment across intermediate layers ($<0.20$), proving that training from scratch discovers a
+completely distinct, unaligned representation basin.
+
+Figure 5.4: Linear CKA Layer-wise Representation Heatmaps for Near-Domain (CIFAR-10)
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 18 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+5.7 Representation Drift Diagnosis: Far-Domain (PathMNIST)
+Figure 5.5 presents the CKA heatmaps for PathMNIST histopathology. Here, the representational dynamics diverge radically. In the
+pre-trained vs fine-tuned heatmap (left), deep layers (`layer3`, `layer4`) exhibit pronounced similarity collapse ($<0.45$),
+demonstrating that adapting to cellular histopathology forces deep layers to undergo radical feature re-wiring. This diagnostic explains
+why frozen feature extraction fails catastrophically (28.00%): the pre-trained deep filters are useless unless fine-tuned.
+
+Figure 5.5: Linear CKA Layer-wise Representation Heatmaps for Far-Domain (PathMNIST)
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 19 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+5.8 Representation Drift Curves Across Depth & Insights
+Figure 5.6 and Figure 5.7 synthesize the diagonal layer-wise CKA alignment across network depth. Table 5.4 provides the exact
+numerical values and anatomical interpretations of feature behavior across network depth.
+
+Figure 5.6: Representational Drift Across Network Depth: Near-Domain vs Far-Domain Alignment
+Layer Depth
+
+Layer Stage
+
+CIFAR-10 (Pre vs
+Scratch)
+
+PathMNIST (Pre vs
+Scratch)
+
+Empirical & Anatomical Interpretation
+
+`conv1`
+
+Stem Conv
+
+0.986
+
+0.976
+
+Universal Gabor edge and frequency filters
+emerge identically regardless of initialization.
+
+`layer1`
+
+Residual Block 1
+
+0.234
+
+0.519
+
+Basic texture and motif combinations diverge into
+domain-specific clusters.
+
+`layer2`
+
+Residual Block 2
+
+0.183
+
+0.415
+
+Intermediate shape compositions separate
+macro-objects from cellular textures.
+
+`layer3`
+
+Residual Block 3
+
+0.182
+
+0.450
+
+Specialized high-level abstractions begin showing
+distinct semantic orientations.
+
+`layer4`
+
+Deep Bottleneck
+
+0.121
+
+0.450
+
+Deep semantic representations diverge
+completely; ImageNet priors fail without
+retraining.
+
+Table 5.4: Layer-wise Diagonal CKA Alignment for ResNet-50 Across Network Depth
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 20 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+CHAPTER 6
+PRACTITIONER GUIDELINES & DECISION FRAMEWORK
+6.1 Strategic Decision Matrix for Applied Vision Engineering
+Based on our 24-matrix empirical findings and CKA representation drift diagnostics, we synthesize a concrete decision framework to
+guide computer vision engineers in selecting adaptation strategies and architectures.
+Target Domain
+Characteristics
+
+Target
+Dataset Size
+
+Recommended
+Strategy
+
+Recommended
+Architecture
+
+Key Rationale & Failure Mode
+Avoidance
+
+Near-Domain
+(Natural photos,
+objects, consumer
+images)
+
+Small
+($N < 5,000$)
+
+`feature_extraction`
+
+MobileNet-V2 /
+ResNet-18
+
+High feature reusability prevents
+overfitting; near 0% trainable params.
+
+Near-Domain
+(Natural photos,
+consumer images)
+
+Medium to
+Large
+($N > 10,000$)
+
+`partial_finetune` or
+`full_finetune`
+
+ResNet-50 /
+EfficientNet-B0
+
+Yields peak accuracy (>70%); differential
+LR prevents catastrophic forgetting.
+
+Far-Domain
+(Histology, Microscopy,
+SAR, Thermal)
+
+Small
+($N < 2,000$)
+
+`partial_finetune`
+(Deep block only)
+
+MobileNet-V2 /
+ResNet-50
+
+Pure feature extraction collapses (28%);
+retraining deep block yields 64.67%.
+
+Far-Domain
+(Histology, Microscopy,
+Satellite)
+
+Large
+($N > 50,000$)
+
+`full_finetune` (Diff LR:
+$10^{-4} / 10^{-3}$)
+
+ResNet-50
+
+Deep features drift significantly (CKA <
+0.50); end-to-end retraining mandatory.
+
+Table 6.1: Practitioner Strategic Decision Matrix Based on Data & Domain Distance
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 21 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+6.2 Adaptation Strategy Decision Tree Flowchart
+Figure 6.1 provides a visual flowchart summarizing the end-to-end decision logic for machine learning practitioners.
+
+Figure 6.1: Transfer Learning Adaptation Strategy Decision Framework Flowchart
+
+6.3 Core Practical Rules of Thumb & Failure Modes
+Rule 1 — Never Rely on Pure Feature Extraction in Far Domains: On PathMNIST, frozen ResNet-50 achieves only 28.00%,
+worse than MobileNet-V2 (46.67%). High-capacity ImageNet backbones contain deep representations that are hyper-specialized to
+natural objects. Without fine-tuning, they form an ineffective feature space for microscopic tissue slices.
+Rule 2 — Partial Fine-Tuning is the Sweet Spot for Compute-Constrained Far-Domain Transfer: Fine-tuning only `layer4` in
+ResNet-50 achieves 64.67% on PathMNIST—outperforming both scratch (14.00%) and full fine-tuning (51.33%) while cutting training
+time by 46%.
+Rule 3 — MobileNet-V2 is the Superior Edge Architecture: MobileNet-V2 delivers outstanding performance under partial and full
+fine-tuning (56.00% on CIFAR-10, 53.33% on PathMNIST) with only 2.2M parameters and 21s training latency.
+Rule 4 — Pre-training is Essential for Gradient Stability: In all 24 configurations, training deep 50-layer backbones from random
+initialization produced poor initial accuracy (5%–14%), proving that pre-training is indispensable for early gradient health.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 22 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+CHAPTER 7
+CONCLUSION AND FUTURE SCOPE
+7.1 Comprehensive Summary of Empirical Findings
+This project established an empirical benchmark investigating visual transfer learning across domain distances. The primary
+contributions are summarized as follows:
+1. Execution of Complete 24-Run Matrix: Successfully benchmarked 2 datasets (CIFAR-10, PathMNIST), 3 backbones
+(ResNet-50, EfficientNet-B0, MobileNet-V2), and 4 adaptation regimes (scratch, feature extraction, partial fine-tuning, full fine-tuning).
+2. Identification of the Feature Extraction Barrier: Empirically proved that pure feature extraction suffers catastrophic degradation
+(dropping to 28.00%) in distant domains, whereas partial fine-tuning excels (64.67%).
+3. Layer-Wise Representation Drift Quantification: Utilized Linear CKA to demonstrate that while early layers (`conv1`) retain
+near-perfect alignment ($\text{CKA} > 0.97$), deep residual stages experience radical representational reorganization ($\text{CKA} <
+0.50$).
+4. Actionable Engineering Guidelines: Delivered a clear, data-driven decision matrix for computer vision practitioners.
+
+7.2 Threats to Validity & Research Limitations
+While this study delivers rigorous empirical insights, several limitations provide context for interpreting the results:
+• Spatial Resolution Uniformity: Native images ($32\times32$ and $28\times28$) were upsampled bicubically to $224\times224$ to
+accommodate standard ImageNet receptive fields. While standard in academic benchmarking, upsampling introduces spatial
+interpolation artifacts.
+• Epoch Horizon: To execute 24 complete training and CKA extraction sweeps within computational limits, training was bounded to
+15 epochs. While relative convergence orderings are preserved, asymptotic convergence may show narrower gaps.
+• Model Family Scope: The evaluation prioritized Convolutional Neural Networks (CNNs). Transformer-based architectures possess
+different inductive biases and self-attention geometries.
+
+7.3 Future Research Directions & Next-Gen Paradigms
+Promising extensions to this research include:
+• Vision Transformers (ViTs): Evaluating whether self-attention mechanisms in ViTs (DeiT, Swin) exhibit different CKA drift
+dynamics compared to convolutional inductive biases.
+• Self-Supervised Foundation Models: Investigating whether self-supervised pre-training (e.g., DINOv2, MAE, SimCLR) alleviates
+the feature extraction bottleneck on distant histological and radiographic datasets.
+• Domain-Specific Pre-training: Benchmarking backbones pre-trained on large-scale biomedical repositories (e.g., RadImageNet,
+BioMedCLIP) versus general ImageNet weights.
+• Dynamic Layer Freezing: Designing adaptive gradient algorithms that dynamically freeze layers once their local CKA drift exceeds
+stability thresholds.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 23 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+APPENDIX: CORE SOURCE CODE LISTINGS
+Appendix A: Linear CKA Engine Implementation in PyTorch (`analysis/cka.py`)
+import torch class LinearCKA: """Centered Kernel Alignment with linear kernel and centering projection.""" def __init__(self,
+device='cpu'): self.device = torch.device(device) def _centering(self, K): n = K.shape[0] unit = torch.ones((n, n),
+device=self.device, dtype=K.dtype) I = torch.eye(n, device=self.device, dtype=K.dtype) H = I - unit / n return H @ K @ H def
+compute(self, X, Y): X, Y = X.to(self.device).float(), Y.to(self.device).float() X = X - X.mean(dim=0, keepdim=True) Y = Y Y.mean(dim=0, keepdim=True) K = self._centering(X @ X.T) L = self._centering(Y @ Y.T) hsic_xy = torch.sum(K * L) hsic_xx =
+torch.sum(K * K) hsic_yy = torch.sum(L * L) denominator = torch.sqrt(hsic_xx * hsic_yy) + 1e-8 return (hsic_xy /
+denominator).item()
+
+Appendix B: Model Factory & Adaptation Strategy Engine (`models/model_factory.py`)
+def create_model(model_name: str, num_classes: int, strategy: str = 'full_finetune'): # 1. Initialize weights (pre-trained vs
+scratch) pretrained = (strategy != 'scratch') weights = 'DEFAULT' if pretrained else None backbone =
+torchvision.models.get_model(model_name, weights=weights) # 2. Extract embedding dimension and replace classification head
+in_features = backbone.fc.in_features if hasattr(backbone, 'fc') else backbone.classifier[1].in_features head =
+StandardizedClassificationHead(in_features, num_classes, dropout=0.2) # 3. Apply parameter freezing logic according to
+adaptation regime if strategy == 'feature_extraction': for param in backbone.parameters(): param.requires_grad = False elif
+strategy == 'partial_finetune': for name, param in backbone.named_parameters(): # Freeze early stages, retain final block (e.g.
+layer4 in ResNet) param.requires_grad = any(target in name for target in ['layer4', 'blocks.6', 'stage.15']) # Attach
+standardized head set_classification_head(backbone, head) return backbone
+
+Appendix C: Non-Invasive Intermediate Feature Hooking Engine (`analysis/feature_extractor.py`)
+class IntermediateFeatureExtractor: """Extracts activation maps via PyTorch forward hooks with spatial GAP flattening.""" def
+__init__(self, model, target_layers): self.model = model self.target_layers = target_layers self.features = {} self.hooks = []
+self._register_hooks() def _register_hooks(self): def get_hook(name): def hook(module, input, output): # Apply Global Average
+Pooling over (H, W) spatial dimensions if output.dim() == 4: pooled = torch.mean(output, dim=[2, 3]) else: pooled = output
+self.features[name] = pooled.detach().cpu() return hook for name, module in self.model.named_modules(): if name in
+self.target_layers: self.hooks.append(module.register_forward_hook(get_hook(name)))
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 24 of 25
+
+TRANSFER LEARNING FOR IMAGE CLASSIFICATION: WHEN DOES PRE-TRAINING HELP OR HURT?
+
+REFERENCES
+[1] J. Yosinski, J. Clune, Y. Bengio, and H. Lipson, 'How transferable are features in deep neural networks?', in Advances in Neural
+Information Processing Systems (NeurIPS), vol. 27, 2014, pp. 3320–3328.
+[2] K. He, X. Zhang, S. Ren, and J. Sun, 'Deep residual learning for image recognition', in Proceedings of the IEEE Conference on
+Computer Vision and Pattern Recognition (CVPR), 2016, pp. 770–778.
+[3] K. He, R. Girshick, and P. Dollár, 'Rethinking ImageNet pre-training', in Proceedings of the IEEE/CVF International Conference on
+Computer Vision (ICCV), 2019, pp. 4918–4927.
+[4] S. Kornblith, M. Norouzi, H. Lee, and G. Hinton, 'Similarity of neural network representations revisited', in International Conference
+on Machine Learning (ICML), 2019, pp. 3519–3529.
+[5] M. Raghu, C. Zhang, J. Kleinberg, and S. Bengio, 'Transfusion: Understanding transfer learning for medical imaging', in Advances
+in Neural Information Processing Systems (NeurIPS), vol. 32, 2019.
+[6] J. Yang, R. Shi, D. Wei, Z. Liu, L. Zhao, B. Ke, H. Pfister, and B. Ni, 'MedMNIST v2: A large-scale lightweight benchmark for 2D
+and 3D biomedical image classification', Scientific Data, vol. 10, no. 1, p. 41, 2023.
+[7] M. Tan and Q. Le, 'EfficientNet: Rethinking model scaling for convolutional neural networks', in International Conference on
+Machine Learning (ICML), 2019, pp. 6105–6114.
+[8] M. Sandler, A. Howard, M. Zhu, A. Zhmoginov, and L. C. Chen, 'MobileNetV2: Inverted residuals and linear bottlenecks', in
+Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2018, pp. 4510–4520.
+[9] A. Krizhevsky, 'Learning multiple layers of features from tiny images', University of Toronto, Tech. Report, 2009.
+[10] J. Deng, W. Dong, R. Socher, L. J. Li, K. Li, and L. Fei-Fei, 'ImageNet: A large-scale hierarchical image database', in IEEE
+Conference on Computer Vision and Pattern Recognition (CVPR), 2009, pp. 248–255.
+[11] I. Loshchilov and F. Hutter, 'Decoupled weight decay regularization', in International Conference on Learning Representations
+(ICLR), 2019.
+[12] J. N. Kather, C. A. Weis, F. Bianconi, et al., 'Multi-class texture analysis in colorectal cancer histology', Scientific Reports, vol. 6,
+no. 1, p. 27988, 2016.
+[13] H. Touvron, M. Cord, M. Douze, F. Massa, A. Sablayrolles, and H. Jégou, 'Training data-efficient image transformers & distillation
+through attention', in International Conference on Machine Learning (ICML), 2021, pp. 10347–10357.
+[14] M. Oquab, T. Darcet, T. Moutakanni, et al., 'DINOv2: Learning robust visual features without supervision', arXiv preprint
+arXiv:2304.07193, 2023.
+[15] C. Szegedy, W. Liu, Y. Jia, et al., 'Going deeper with convolutions', in Proceedings of the IEEE Conference on Computer Vision
+and Pattern Recognition (CVPR), 2015, pp. 1–9.
+[16] A. Dosovitskiy, L. Beyer, A. Kolesnikov, et al., 'An image is worth 16x16 words: Transformers for image recognition at scale', in
+International Conference on Learning Representations (ICLR), 2021.
+[17] Z. Liu, H. Mao, C. Y. Wu, et al., 'A ConvNet for the 2020s', in Proceedings of the IEEE/CVF Conference on Computer Vision and
+Pattern Recognition (CVPR), 2022, pp. 11976–11986.
+[18] K. Simonyan and A. Zisserman, 'Very deep convolutional networks for large-scale image recognition', in International Conference
+on Learning Representations (ICLR), 2015.
+[19] A. Morcos, M. Raghu, and S. Bengio, 'Insights on representational similarity in deep neural networks with canonical correlation',
+in Advances in Neural Information Processing Systems (NeurIPS), vol. 31, 2018.
+[20] S. J. Pan and Q. Yang, 'A survey on transfer learning', IEEE Transactions on Knowledge and Data Engineering, vol. 22, no. 10,
+pp. 1345–1359, 2010.
+
+Department of Computer Science and Engineering, KPRIET
+
+Page 25 of 25
+
+

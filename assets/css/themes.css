@@ -1,0 +1,54 @@
+/* Professional Task Management System - Multi-Theme Suite */
+
+/* Theme 1: Clean Light SaaS (Notion / Jira Style) */
+body.theme-light {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-card: rgba(255, 255, 255, 0.95);
+    --border-color: rgba(203, 213, 225, 0.8);
+    --border-highlight: rgba(79, 70, 229, 0.4);
+    
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.12);
+}
+
+body.theme-light .navbar {
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid var(--border-color);
+}
+
+body.theme-light .form-control {
+    background: #ffffff;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+body.theme-light .table th {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* Theme 2: Minimalist Dark Slate */
+body.theme-slate {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: rgba(30, 41, 59, 0.85);
+    --border-color: rgba(148, 163, 184, 0.15);
+    --border-highlight: rgba(129, 140, 248, 0.4);
+    --accent-primary: #6366f1;
+}
+
+/* Theme 3: High-Productivity Emerald */
+body.theme-emerald {
+    --bg-primary: #06140d;
+    --bg-secondary: #0c2419;
+    --bg-card: rgba(12, 36, 25, 0.85);
+    --border-color: rgba(52, 211, 153, 0.2);
+    --border-highlight: rgba(52, 211, 153, 0.5);
+    --accent-primary: #10b981;
+    --accent-teal: #34d399;
+}

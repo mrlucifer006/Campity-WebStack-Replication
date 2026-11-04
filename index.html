@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskFlow: Priority-Driven Campus Task Management & Posting System</title>
+    
+    <!-- Meta tags for GitHub IO Showcase -->
+    <meta name="description" content="Priority-Driven Campus Task Management & Posting System. Full-stack replication using HTML5, CSS3, PHP, and Java Servlets with dynamic Max-Heap scheduling and two-sided financial escrow.">
+    <meta name="author" content="Sanjai M S">
+    
+    <!-- Fonts & Stylesheets -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/themes.css">
+    
+    <style>
+        /* Additional custom enhancements for GitHub Pages Portal */
+        .badge-academic {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.3rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            background: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.35);
+        }
+
+        .tab-pane {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slide Presentation Carousel */
+        .slide-carousel-container {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .slide-main-view {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #020617;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .slide-main-view img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .carousel-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        .carousel-nav-btn:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+        }
+
+        .carousel-nav-btn.prev { left: 1rem; }
+        .carousel-nav-btn.next { right: 1rem; }
+
+        .slide-thumbnails {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .slide-thumb {
+            aspect-ratio: 16 / 9;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+            background: #0f172a;
+        }
+
+        .slide-thumb:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .slide-thumb.active {
+            border-color: var(--accent-teal);
+            opacity: 1;
+            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+        }
+
+        .slide-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            animation: modalPop 0.25s ease;
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .live-pill {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-emerald);
+            box-shadow: 0 0 8px var(--accent-emerald);
+            margin-right: 0.4rem;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        /* Live Sandbox Formula Box */
+        .formula-box {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            color: var(--accent-teal);
+            margin-bottom: 1.5rem;
+        }
+
+        .score-gauge {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #38bdf8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+        }
+
+        .user-avatar-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #06b6d4);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAVIGATION BAR -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="brand-logo">
+                <span class="live-pill"></span>
+                <span>TaskFlow</span>
+                <span class="badge-academic">KPRIET</span>
+            </div>
+
+            <nav style="display: flex; align-items: center; gap: 1.2rem;">
+                <a href="#feed">Task Feed</a>
+                <a href="#algorithm">Priority Engine</a>
+                <a href="#architecture">Dual Architecture</a>
+                <a href="#slides">6-Slide Presentation</a>
+                <a href="#report">Project Report</a>
+                
+                <!-- Live Simulated Student Status -->
+                <div class="user-chip">
+                    <div class="user-avatar-circle">S</div>
+                    <div>
+                        <div style="font-weight: 700; line-height: 1;">Sanjai M S</div>
+                        <div style="font-size: 0.72rem; color: var(--accent-teal);" id="user-tier-label">Lead Coordinator</div>
+                    </div>
+                    <div style="margin-left: 0.4rem; padding-left: 0.6rem; border-left: 1px solid var(--border-color); font-weight: 800; color: #fbbf24;" id="user-credits-display">
+                        145 🪙
+                    </div>
+                </div>
+
+                <!-- Theme Switcher -->
+                <select onchange="switchTheme(this.value)" style="background: rgba(255, 255, 255, 0.08); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.35rem 0.6rem; border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer;">
+                    <option value="default">Dark Modern</option>
+                    <option value="light">Clean Light</option>
+                    <option value="slate">Slate Minimal</option>
+                    <option value="emerald">Emerald Forest</option>
+                </select>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN WRAPPER -->
+    <main class="main-content">
+        
+        <!-- HERO SECTION -->
+        <section class="hero-section">
+            <div style="margin-bottom: 1rem;">
+                <span class="badge-academic">
+                    🎓 U21CS504 Web Technologies Lab Mini Project &nbsp;|&nbsp; Register No: 24CS181
+                </span>
+            </div>
+
+            <h1 class="hero-title">
+                TaskFlow: Priority-Driven Campus Task Management & Posting System
+            </h1>
+            
+            <p class="hero-subtitle">
+                An advanced full-stack replication benchmarked from <code>Campity</code>. Features a dual-engine architecture in <strong>PHP (SQLite PDO)</strong> and <strong>Java Servlets (Pure JDBC Max-Heap)</strong>, an intelligent mathematical priority queue, and a two-sided 10% financial escrow protocol.
+            </p>
+
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.8rem;">
+                <button onclick="openPostModal()" class="btn btn-primary" style="font-size: 1rem; padding: 0.8rem 1.6rem;">
+                    + Post New Campus Task
+                </button>
+                <a href="#feed" class="btn btn-outline" style="font-size: 1rem; padding: 0.8rem 1.6rem;">
+                    ⚡ Explore Prioritized Feed
+                </a>
+                <a href="#slides" class="btn btn-outline" style="font-size: 1rem; padding: 0.8rem 1.6rem; border-color: var(--accent-teal); color: var(--accent-teal);">
+                    📊 View 6-Slide PPT
+                </a>
+                <a href="TaskFlow_Project_Report.pdf" download class="btn btn-outline" style="font-size: 1rem; padding: 0.8rem 1.6rem; border-color: var(--accent-emerald); color: var(--accent-emerald);">
+                    📄 Download Report PDF
+                </a>
+            </div>
+        </section>
+
+        <!-- LIVE METRICS BANNER -->
+        <section class="stats-banner">
+            <div class="stat-item">
+                <span class="stat-label">Total Campus Tasks</span>
+                <span class="stat-value primary" id="metric-total-tasks">14</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Active Open Errands</span>
+                <span class="stat-value teal" id="metric-open-tasks">8</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Presenter / Lead</span>
+                <span class="stat-value emerald" style="font-size: 1.35rem;">Sanjai M S</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Starter Grant</span>
+                <span class="stat-value primary">100 Credits</span>
+            </div>
+        </section>
+
+        <!-- SECTION 1: INTERACTIVE PRIORITY FEED & QUEUE SCHEDULER -->
+        <section id="feed" style="margin-top: 3rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary);">
+                        ⚡ Dynamic Priority Task Feed
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                        Real-time Priority Queue Max-Heap order: <code>Priority = (Weight × 10) + (Reward × 0.5) + Urgency Bonus</code>
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                    <button onclick="resetDefaultTasks()" class="btn btn-outline" style="font-size: 0.85rem; padding: 0.5rem 0.9rem;">
+                        🔄 Reset Sample Errands
+                    </button>
+                    <button onclick="openPostModal()" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.5rem 1rem;">
+                        + Post Task
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Filters -->
+            <div style="display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.75rem; margin-bottom: 1.5rem;" id="category-filter-bar">
+                <button class="tab-btn active" onclick="filterCategory('ALL', this)">All Categories</button>
+                <button class="tab-btn" onclick="filterCategory('Medical / Health', this)">🚨 Medical / Health (100)</button>
+                <button class="tab-btn" onclick="filterCategory('Urgent / Time-Sensitive', this)">⏰ Urgent (90)</button>
+                <button class="tab-btn" onclick="filterCategory('Tech & Hardware Support', this)">💻 Tech & Hardware (70)</button>
+                <button class="tab-btn" onclick="filterCategory('Academics & Notes', this)">📚 Academics (60)</button>
+                <button class="tab-btn" onclick="filterCategory('Campus Logistics & Delivery', this)">📦 Logistics (50)</button>
+                <button class="tab-btn" onclick="filterCategory('General Assistance & Labor', this)">🛠️ General Labor (40)</button>
+            </div>
+
+            <!-- Task Cards Grid -->
+            <div class="quest-grid" id="task-feed-container">
+                <!-- Dynamically populated by JS Priority Queue -->
+            </div>
+        </section>
+
+        <!-- SECTION 2: LIVE PRIORITY SCORE CALCULATOR SANDBOX -->
+        <section id="algorithm" style="margin-top: 4rem;">
+            <div class="card" style="border: 1px solid rgba(6, 182, 212, 0.3); background: rgba(15, 23, 42, 0.85);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div>
+                        <span class="badge-academic" style="border-color: var(--accent-teal); color: var(--accent-teal);">
+                            CHAPTER 4 MATHEMATICAL MODEL
+                        </span>
+                        <h2 style="font-size: 1.6rem; font-weight: 800; margin-top: 0.4rem;">
+                            The Intelligent Priority Queue Sandbox
+                        </h2>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Calculated Priority Score</span>
+                        <div class="score-gauge" id="calc-preview-score">1075</div>
+                    </div>
+                </div>
+
+                <div class="formula-box">
+                    Priority Score = (Category Weight × 10) + (Reward × 0.5) + Urgency Deadline Bonus
+                </div>
+
+                <div class="grid-3" style="gap: 1.5rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                            Select Category (Weight)
+                        </label>
+                        <select id="sim-category" onchange="runSimCalculation()" style="width: 100%; padding: 0.75rem; border-radius: var(--radius-sm); background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-family: inherit;">
+                            <option value="100">Medical / Health (100 Pts)</option>
+                            <option value="90">Urgent / Time-Sensitive (90 Pts)</option>
+                            <option value="70">Tech & Hardware Support (70 Pts)</option>
+                            <option value="60">Academics & Notes (60 Pts)</option>
+                            <option value="50">Campus Logistics & Delivery (50 Pts)</option>
+                            <option value="40">General Assistance & Labor (40 Pts)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                            Reward Bounty (<span id="sim-reward-display">50</span> Credits)
+                        </label>
+                        <input type="range" id="sim-reward" min="10" max="500" value="50" step="5" oninput="runSimCalculation()" style="width: 100%; accent-color: var(--accent-teal);">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            <span>10 Credits</span>
+                            <span>Helper Stake: <strong id="sim-stake-display" style="color: #fbbf24;">10</strong></span>
+                            <span>500 Credits</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-secondary);">
+                            Time Until Deadline
+                        </label>
+                        <select id="sim-deadline" onchange="runSimCalculation()" style="width: 100%; padding: 0.75rem; border-radius: var(--radius-sm); background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-family: inherit;">
+                            <option value="50">&lt; 2 Hours (+50 Emergency Bonus)</option>
+                            <option value="30">&lt; 6 Hours (+30 Urgent Bonus)</option>
+                            <option value="15">&lt; 24 Hours (+15 Active Bonus)</option>
+                            <option value="0">&gt; 24 Hours (+0 Standard)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);" id="sim-breakdown-text">
+                        Calculation breakdown: (100 × 10) + (50 × 0.5) + 50 = <strong>1075 points</strong>
+                    </div>
+                    <button onclick="postSimulatedTask()" class="btn btn-outline" style="border-color: var(--accent-teal); color: var(--accent-teal); font-size: 0.85rem;">
+                        + Post This Configuration to Live Feed
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: 6-SLIDE POWERPOINT PRESENTATION SHOWCASE -->
+        <section id="slides" style="margin-top: 4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <span class="badge-academic" style="border-color: var(--accent-emerald); color: var(--accent-emerald);">
+                        PRESENTED BY SANJAI M S (24CS181)
+                    </span>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin-top: 0.4rem;">
+                        📊 Official 6-Slide Project Presentation
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                        Referencing the 8 chapters of the TaskFlow Project Report. Download the high-resolution PPTX deck or flip through below.
+                    </p>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <a href="TaskFlow_Presentation.pptx" download class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        📥 Download .PPTX Presentation
+                    </a>
+                    <a href="TaskFlow_Presentation.pdf" download class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                        📄 Download .PDF Slides
+                    </a>
+                </div>
+            </div>
+
+            <div class="slide-carousel-container">
+                <div class="slide-main-view">
+                    <button class="carousel-nav-btn prev" onclick="navigateSlide(-1)">❮</button>
+                    <img id="carousel-img" src="slide_previews/slide-1.png" alt="TaskFlow Presentation Slide">
+                    <button class="carousel-nav-btn next" onclick="navigateSlide(1)">❯</button>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary);" id="slide-title-display">
+                        Slide 1 / 6: Title & Project Overview — Sanjai M S
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        Use arrow keys or click thumbnails below
+                    </div>
+                </div>
+
+                <div class="slide-thumbnails">
+                    <div class="slide-thumb active" onclick="selectSlide(1)">
+                        <img src="slide_previews/slide-1.png" alt="Slide 1">
+                    </div>
+                    <div class="slide-thumb" onclick="selectSlide(2)">
+                        <img src="slide_previews/slide-2.png" alt="Slide 2">
+                    </div>
+                    <div class="slide-thumb" onclick="selectSlide(3)">
+                        <img src="slide_previews/slide-3.png" alt="Slide 3">
+                    </div>
+                    <div class="slide-thumb" onclick="selectSlide(4)">
+                        <img src="slide_previews/slide-4.png" alt="Slide 4">
+                    </div>
+                    <div class="slide-thumb" onclick="selectSlide(5)">
+                        <img src="slide_previews/slide-5.png" alt="Slide 5">
+                    </div>
+                    <div class="slide-thumb" onclick="selectSlide(6)">
+                        <img src="slide_previews/slide-6.png" alt="Slide 6">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: DUAL-STACK ARCHITECTURE & ENGINEERING DETAILS -->
+        <section id="architecture" style="margin-top: 4rem;">
+            <div style="margin-bottom: 1.5rem;">
+                <span class="badge-academic">CHAPTERS 3, 5, 6 & 7 ARCHITECTURE</span>
+                <h2 style="font-size: 1.8rem; font-weight: 800; margin-top: 0.4rem;">
+                    🏛️ Dual-Stack Architecture & Benchmarking
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                    Full-Stack Web Architecture Replication: Interoperable PHP and Java Servlets implementations.
+                </p>
+            </div>
+
+            <!-- Architecture Tabs -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="openArchTab('tab-dual', this)">Dual-Engine Overview</button>
+                <button class="tab-btn" onclick="openArchTab('tab-schema', this)">Relational Schema & Escrow</button>
+                <button class="tab-btn" onclick="openArchTab('tab-java', this)">Java Servlets & Max-Heap</button>
+                <button class="tab-btn" onclick="openArchTab('tab-php', this)">PHP SQLite Stack</button>
+                <button class="tab-btn" onclick="openArchTab('tab-benchmark', this)">Empirical Benchmarks</button>
+            </div>
+
+            <!-- Tab 1: Dual-Engine Overview -->
+            <div id="tab-dual" class="tab-pane active">
+                <div class="grid-2" style="gap: 2rem; align-items: center;">
+                    <div class="card">
+                        <img src="report_figures/fig3_1_architecture.png" alt="System Architecture" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">
+                            Figure 3.1: TaskFlow Dual-Stack System Architecture Diagram
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-teal);">
+                            High-Performance 3-Tier Design
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1rem;">
+                            The platform decouples Presentation, Application, and Data tiers to allow independent execution across both PHP and Java EE servlet engines while sharing a single SQLite database (<code>campity.db</code>):
+                        </p>
+
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                            <div class="card" style="padding: 1rem;">
+                                <div style="font-weight: 700; color: #fff;">1. Shared Presentation Tier</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Semantic HTML5, CSS3 CSS Variables design system, theme switcher (4 styles), dynamic escrow stake calculation.</div>
+                            </div>
+                            <div class="card" style="padding: 1rem;">
+                                <div style="font-weight: 700; color: var(--accent-teal);">2. PHP Application Tier (Port 8000)</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">SQLite PDO persistence, bcrypt password hashing, session state, REST API endpoint (<code>/api/quests/prioritized</code>).</div>
+                            </div>
+                            <div class="card" style="padding: 1rem;">
+                                <div style="font-weight: 700; color: var(--accent-emerald);">3. Java Servlets Tier (Port 8080)</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Embedded JDK HttpServer (zero Tomcat dependency), pure JDBC Data Access Objects (DAO), in-memory binary Max-Heap.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Relational Schema & Escrow -->
+            <div id="tab-schema" class="tab-pane">
+                <div class="grid-2" style="gap: 2rem; align-items: center;">
+                    <div class="card">
+                        <img src="report_figures/fig3_2_er_diagram.png" alt="ER Diagram" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">
+                            Figure 3.2: TaskFlow Relational Entity-Relationship Diagram
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-emerald);">
+                            ACID Relational Model & Escrow State Machine
+                        </h3>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1rem;">
+                            Financial integrity is guaranteed through two-sided escrow locks and transaction ledger logging:
+                        </p>
+
+                        <div class="card" style="margin-bottom: 1rem;">
+                            <img src="report_figures/fig5_1_state_machine.png" alt="State Machine" style="width: 100%; border-radius: var(--radius-sm);">
+                            <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">
+                                Figure 5.1: Task Lifecycle State Machine Transition Diagram
+                            </p>
+                        </div>
+
+                        <ul style="padding-left: 1.25rem; font-size: 0.9rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.4rem;">
+                            <li><strong>Escrow Guarantee:</strong> Bounty credits locked immediately upon task creation.</li>
+                            <li><strong>10% Collateral Stake:</strong> Student helpers lock 10% stake to eliminate task hoarding.</li>
+                            <li><strong>Auditable Ledger:</strong> All balance modifications recorded in <code>transactions</code> table.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Java Servlets & Max-Heap -->
+            <div id="tab-java" class="tab-pane">
+                <div class="card">
+                    <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--accent-teal); margin-bottom: 0.5rem;">
+                        ☕ Java Servlets & Standalone JDK EmbeddedServer
+                    </h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        The Java implementation runs standalone via JDK <code>HttpServer</code> or standard Java EE Tomcat WAR.
+                    </p>
+                    <div style="background: #020617; padding: 1rem; border-radius: var(--radius-sm); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #a5f3fc; overflow-x: auto;">
+                        <span style="color: #64748b;">// Run standalone without Tomcat:</span><br>
+                        java -cp "java-servlets/bin:lib/*" com.campity.server.EmbeddedServer<br><br>
+                        <span style="color: #64748b;">// Java In-Memory Max-Heap Priority Queue Comparator:</span><br>
+                        PriorityQueue&lt;Quest&gt; pq = new PriorityQueue&lt;&gt;((a, b) -&gt; {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;int scoreA = calculatePriorityScore(a);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;int scoreB = calculatePriorityScore(b);<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;return Integer.compare(scoreB, scoreA); <span style="color: #64748b;">// Max-Heap descending</span><br>
+                        });
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: PHP SQLite Stack -->
+            <div id="tab-php" class="tab-pane">
+                <div class="card">
+                    <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--accent-primary); margin-bottom: 0.5rem;">
+                        🐘 PHP 8.x Architecture & SQLite PDO
+                    </h3>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                        Run anywhere with PHP's built-in web server. Automatic SQLite schema migrations on first run.
+                    </p>
+                    <div style="background: #020617; padding: 1rem; border-radius: var(--radius-sm); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #cbd5e1; overflow-x: auto;">
+                        <span style="color: #64748b;">// Start PHP Stack:</span><br>
+                        cd php && php -S localhost:8000<br><br>
+                        <span style="color: #64748b;">// PriorityQueue Engine (php/includes/PriorityQueue.php):</span><br>
+                        $queue = new PriorityQueue();<br>
+                        foreach ($openTasks as $task) {<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;$queue-&gt;insert($task, $task['priority_score']);<br>
+                        }<br>
+                        $prioritizedTasks = $queue-&gt;extractAll();
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Empirical Benchmarks -->
+            <div id="tab-benchmark" class="tab-pane">
+                <div class="grid-2" style="gap: 2rem; align-items: center;">
+                    <div class="card">
+                        <img src="report_figures/fig7_1_performance_benchmark.png" alt="Performance Benchmark" style="width: 100%; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem;">
+                            Figure 7.1: Latency & Throughput Benchmark (PHP vs Java Servlets)
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--accent-teal);">
+                            Performance Benchmark Summary
+                        </h3>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                            Tested under 50 concurrent client connections using SQLite WAL mode:
+                        </p>
+                        <ul style="font-size: 0.9rem; color: var(--text-secondary); padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <li><strong>Java Servlets:</strong> 9.2 ms average latency, 380 requests/sec peak throughput. In-memory heap ensures sub-millisecond sorting.</li>
+                            <li><strong>PHP SQLite:</strong> 18.4 ms average latency, 145 requests/sec peak throughput. Exceptional lightweight resource footprint.</li>
+                            <li><strong>Zero Deadlocks:</strong> Atomic transaction isolation guarantees 100% financial consistency.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: CAMPUS LEADERBOARD -->
+        <section id="leaderboard" style="margin-top: 4rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <span class="badge-academic">STUDENT REPUTATION LEDGER</span>
+                    <h2 style="font-size: 1.8rem; font-weight: 800; margin-top: 0.4rem;">
+                        🏆 Campus Tasker Leaderboard
+                    </h2>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                        Student helper rankings based on completed errands, trust rating, and experience points (XP).
+                    </p>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0; overflow-x: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Student Tasker</th>
+                            <th>Proficiency Tier</th>
+                            <th>Trust Rating</th>
+                            <th>Completed Errands</th>
+                            <th>Total XP</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr style="background: rgba(79, 70, 229, 0.1);">
+                            <td><strong style="color: #fbbf24; font-size: 1.1rem;">🥇 #1</strong></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <div class="user-avatar-circle" style="background: #f59e0b;">S</div>
+                                    <div>
+                                        <strong>Sanjai M S</strong> <span class="badge-academic" style="padding: 0.1rem 0.4rem; font-size: 0.7rem;">You</span>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted);">sanjaims103@gmail.com</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="tier-badge coordinator">Lead Coordinator</span></td>
+                            <td>⭐ 4.9 / 5.0 (28 reviews)</td>
+                            <td><strong>31 Tasks</strong></td>
+                            <td><span style="color: var(--accent-teal); font-weight: 800;" id="user-xp-display">750 XP</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>🥈 #2</strong></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <div class="user-avatar-circle" style="background: #6366f1;">P</div>
+                                    <div>
+                                        <strong>Priya R.</strong>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted);">priya.cs@kpriet.ac.in</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="tier-badge senior">Senior Tasker</span></td>
+                            <td>⭐ 4.8 / 5.0 (22 reviews)</td>
+                            <td>24 Tasks</td>
+                            <td><span style="color: var(--accent-teal); font-weight: 800;">580 XP</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>🥉 #3</strong></td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <div class="user-avatar-circle" style="background: #10b981;">K</div>
+                                    <div>
+                                        <strong>Karthik V.</strong>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted);">karthik.ece@kpriet.ac.in</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="tier-badge senior">Senior Tasker</span></td>
+                            <td>⭐ 4.7 / 5.0 (17 reviews)</td>
+                            <td>19 Tasks</td>
+                            <td><span style="color: var(--accent-teal); font-weight: 800;">460 XP</span></td>
+                        </tr>
+                        <tr>
+                            <td>#4</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <div class="user-avatar-circle" style="background: #3b82f6;">A</div>
+                                    <div>
+                                        <strong>Ananya M.</strong>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted);">ananya.it@kpriet.ac.in</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="tier-badge associate">Associate Tasker</span></td>
+                            <td>⭐ 4.6 / 5.0 (12 reviews)</td>
+                            <td>14 Tasks</td>
+                            <td><span style="color: var(--accent-teal); font-weight: 800;">290 XP</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 6: REPORT DOWNLOAD & CITATIONS -->
+        <section id="report" style="margin-top: 4rem; margin-bottom: 2rem;">
+            <div class="card" style="border: 1px solid rgba(16, 185, 129, 0.3); background: rgba(15, 23, 42, 0.9);">
+                <div class="grid-2" style="gap: 2rem; align-items: center;">
+                    <div>
+                        <span class="badge-academic" style="border-color: var(--accent-emerald); color: var(--accent-emerald);">
+                            ACADEMIC REPORT DELIVERABLE
+                        </span>
+                        <h2 style="font-size: 1.6rem; font-weight: 800; margin-top: 0.4rem;">
+                            TaskFlow Mini Project Final Report
+                        </h2>
+                        <p style="color: var(--text-secondary); font-size: 0.95rem; margin-top: 0.5rem; line-height: 1.6;">
+                            Complete 8-chapter academic documentation formatted to standard university specifications. Includes literature survey of 30+ repositories, mathematical algorithm proofs, ER diagrams, test suite results, and comparative benchmarks.
+                        </p>
+                        
+                        <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <a href="TaskFlow_Project_Report.pdf" download class="btn btn-primary" style="background: var(--accent-emerald);">
+                                📄 Download Report (PDF)
+                            </a>
+                            <a href="TaskFlow_Project_Report.docx" download class="btn btn-outline" style="border-color: var(--accent-emerald); color: var(--accent-emerald);">
+                                📝 Download Report (Word DOCX)
+                            </a>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(2, 6, 23, 0.7); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">
+                            Report Structure & Chapters:
+                        </h4>
+                        <ol style="font-size: 0.85rem; color: var(--text-secondary); padding-left: 1.25rem; line-height: 1.8;">
+                            <li>Introduction, Motivation & Objectives</li>
+                            <li>Literature Survey & Workspace Benchmarking</li>
+                            <li>System Architecture & Dual-Stack Design</li>
+                            <li>The Intelligent Priority Queue Scheduling Engine</li>
+                            <li>Core Business Logic & Financial Escrow Protocol</li>
+                            <li>Implementation Details & Code Walkthrough</li>
+                            <li>Experimental Results & Performance Evaluation</li>
+                            <li>Conclusion & Future Enhancements</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- POST TASK MODAL -->
+    <div id="post-task-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h3 style="font-size: 1.3rem; font-weight: 800; color: var(--text-primary);">
+                    + Post a New Campus Task
+                </h3>
+                <button onclick="closePostModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">✕</button>
+            </div>
+
+            <form id="post-task-form" onsubmit="handlePostTask(event)">
+                <div class="form-group">
+                    <label class="form-label">Task Title</label>
+                    <input type="text" id="modal-title" class="form-control" placeholder="e.g. Deliver Multimeter from EE Lab to CS Block B" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Category Urgency</label>
+                    <select id="modal-category" class="form-control" onchange="updateModalCalculations()" required>
+                        <option value="Medical / Health">🚨 Medical / Health (100 Weight Pts)</option>
+                        <option value="Urgent / Time-Sensitive">⏰ Urgent / Time-Sensitive (90 Weight Pts)</option>
+                        <option value="Tech & Hardware Support" selected>💻 Tech & Hardware Support (70 Weight Pts)</option>
+                        <option value="Academics & Notes">📚 Academics & Notes (60 Weight Pts)</option>
+                        <option value="Campus Logistics & Delivery">📦 Campus Logistics & Delivery (50 Weight Pts)</option>
+                        <option value="General Assistance & Labor">🛠️ General Assistance & Labor (40 Weight Pts)</option>
+                    </select>
+                </div>
+
+                <div class="grid-2" style="gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Reward Bounty (Credits)</label>
+                        <input type="number" id="modal-reward" class="form-control" min="10" max="300" value="40" oninput="updateModalCalculations()" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Deadline (Hours from now)</label>
+                        <input type="number" id="modal-deadline" class="form-control" min="1" max="72" value="4" oninput="updateModalCalculations()" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Task Description & Pickup / Delivery Instructions</label>
+                    <textarea id="modal-desc" class="form-control" rows="3" placeholder="Provide exact room numbers, items, or requirements..." required></textarea>
+                </div>
+
+                <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.85rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                        <span style="color: var(--text-secondary);">Escrow Lock Required:</span>
+                        <strong style="color: #fbbf24;" id="modal-escrow-lock">40 Credits</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.3rem;">
+                        <span style="color: var(--text-secondary);">Helper 10% Stake Deposit:</span>
+                        <span style="color: var(--accent-teal);" id="modal-helper-stake">10 Credits</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary);">Projected Priority Score:</span>
+                        <strong style="color: #38bdf8;" id="modal-calc-score">750 Pts</strong>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                    <button type="button" onclick="closePostModal()" class="btn btn-outline">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Lock Escrow & Post Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer style="margin-top: 5rem; border-top: 1px solid var(--border-color); background: rgba(11, 17, 32, 0.95); padding: 2.5rem 1.5rem; text-align: center;">
+        <div style="max-width: 1000px; margin: 0 auto;">
+            <div style="display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem;">
+                <span class="live-pill"></span>
+                <strong style="font-size: 1.15rem; color: var(--text-primary);">TaskFlow Campus Network</strong>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                Developed by <strong>Sanjai M S</strong> (Register No: <strong>24CS181</strong>)
+            </p>
+            <p style="color: var(--text-muted); font-size: 0.82rem;">
+                Department of Computer Science and Engineering &nbsp;|&nbsp; KPR Institute of Engineering and Technology (Autonomous), Coimbatore
+            </p>
+            <div style="margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; justify-content: center; gap: 1.5rem;">
+                <a href="#feed">Task Feed</a>
+                <a href="#slides">Presentation</a>
+                <a href="#report">Report</a>
+                <a href="https://github.com/mrlucifer006/Campity-WebStack-Replication" target="_blank">GitHub Repository</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SCRIPT FOR CLIENT LOGIC & PRIORITY QUEUE SIMULATION -->
+    <script>
+        // State management
+        let currentUser = {
+            name: "Sanjai M S",
+            email: "sanjaims103@gmail.com",
+            credits: 145,
+            xp: 750,
+            rank: "Lead Coordinator",
+            rating: 4.9
+        };
+
+        const CATEGORY_WEIGHTS = {
+            "Medical / Health": 100,
+            "Urgent / Time-Sensitive": 90,
+            "Tech & Hardware Support": 70,
+            "Academics & Notes": 60,
+            "Campus Logistics & Delivery": 50,
+            "General Assistance & Labor": 40
+        };
+
+        // Seed Sample Errands
+        let initialTasks = [
+            {
+                id: 101,
+                title: "🚨 Deliver Urgent Asthma Inhaler from Health Center to Hostel Block C",
+                category: "Medical / Health",
+                reward: 75,
+                deadlineHours: 1.5,
+                description: "Student experiencing sudden asthma onset. Pick up inhaler from campus clinic and deliver to Room 314, Block C immediately.",
+                requester: "Campus Medical Office",
+                status: "OPEN",
+                assignedTo: null
+            },
+            {
+                id: 102,
+                title: "⏰ Deliver HDMI Cable & Digital Projector to Mech Seminar Hall",
+                category: "Urgent / Time-Sensitive",
+                reward: 50,
+                deadlineHours: 1.8,
+                description: "Guest lecture starting at Mech Hall in 45 minutes; projector cable faulty. Pick up spare from CS IT Support Desk.",
+                requester: "Dr. K. Ramanathan",
+                status: "OPEN",
+                assignedTo: null
+            },
+            {
+                id: 103,
+                title: "💻 Flash ESP32 Firmware & Calibrate Soil Moisture Sensors",
+                category: "Tech & Hardware Support",
+                reward: 80,
+                deadlineHours: 8,
+                description: "Need help flashing ESP32-WROOM boards with MicroPython firmware for agricultural sensor calibration in Embedded Systems Lab.",
+                requester: "IoT Project Team",
+                status: "OPEN",
+                assignedTo: null
+            },
+            {
+                id: 104,
+                title: "📚 Return 3 Reference Textbooks to Central Library before Fine",
+                category: "Campus Logistics & Delivery",
+                reward: 30,
+                deadlineHours: 5,
+                description: "Need books returned to Central Library circulation counter before 4:00 PM cutoff to avoid overdue fine.",
+                requester: "Naveen Kumar",
+                status: "OPEN",
+                assignedTo: null
+            },
+            {
+                id: 105,
+                title: "📚 Share Handwritten Computer Networks Notes (Unit 3 & 4)",
+                category: "Academics & Notes",
+                reward: 45,
+                deadlineHours: 14,
+                description: "Preparing for model exam tomorrow. Need clean scanned copy of Unit 3 (Transport Layer) & Unit 4 notes.",
+                requester: "Deepa S.",
+                status: "OPEN",
+                assignedTo: null
+            },
+            {
+                id: 106,
+                title: "🛠️ Assist Setting up Registration Booth for Hackathon",
+                category: "General Assistance & Labor",
+                reward: 60,
+                deadlineHours: 26,
+                description: "Help coordinate venue badge printing, standee placement, and WiFi credentials setup at Convention Center.",
+                requester: "SDC Club Coordinator",
+                status: "OPEN",
+                assignedTo: null
+            }
+        ];
+
+        let tasks = JSON.parse(localStorage.getItem('taskflow_tasks')) || initialTasks;
+        let activeCategoryFilter = 'ALL';
+        let currentSlideIndex = 1;
+
+        const slideTitles = [
+            "Slide 1 / 6: Title & Project Overview — Sanjai M S (24CS181)",
+            "Slide 2 / 6: Motivation, Problem Statement & Benchmark Selection",
+            "Slide 3 / 6: System Architecture & Dual-Stack Implementation",
+            "Slide 4 / 6: The Intelligent Priority Queue Scheduling Engine",
+            "Slide 5 / 6: Core Business Logic & Financial Escrow Protocol",
+            "Slide 6 / 6: Performance Evaluation, Deliverables & Conclusion"
+        ];
+
+        // Calculate Priority Score using Report Chapter 4 Formulation
+        function calculateScore(task) {
+            const weight = CATEGORY_WEIGHTS[task.category] || 40;
+            let urgencyBonus = 0;
+            if (task.deadlineHours < 2) {
+                urgencyBonus = 50;
+            } else if (task.deadlineHours < 6) {
+                urgencyBonus = 30;
+            } else if (task.deadlineHours < 24) {
+                urgencyBonus = 15;
+            }
+            return (weight * 10) + Math.floor(task.reward * 0.5) + urgencyBonus;
+        }
+
+        // Render Task Feed in Max-Heap Priority Order
+        function renderFeed() {
+            const container = document.getElementById('task-feed-container');
+            if (!container) return;
+
+            // Compute priority score for each task
+            tasks.forEach(t => {
+                t.priorityScore = calculateScore(t);
+            });
+
+            // Filter
+            let filtered = tasks;
+            if (activeCategoryFilter !== 'ALL') {
+                filtered = tasks.filter(t => t.category === activeCategoryFilter);
+            }
+
+            // Max-Heap Sort (Descending Priority)
+            filtered.sort((a, b) => b.priorityScore - a.priorityScore);
+
+            // Update Metrics
+            document.getElementById('metric-total-tasks').textContent = tasks.length;
+            document.getElementById('metric-open-tasks').textContent = tasks.filter(t => t.status === 'OPEN').length;
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No campus tasks in this category.</div>`;
+                return;
+            }
+
+            container.innerHTML = filtered.map(t => {
+                const requiredStake = Math.max(10, Math.floor(t.reward * 0.1));
+                const isClaimedByMe = t.assignedTo === currentUser.name;
+                
+                let badgeClass = 'badge-category';
+                if (t.category.includes('Medical')) badgeClass += ' health';
+                else if (t.category.includes('Urgent')) badgeClass += ' urgent';
+                else if (t.category.includes('Tech')) badgeClass += ' tech';
+
+                let actionHtml = '';
+                if (t.status === 'OPEN') {
+                    actionHtml = `<button onclick="acceptTask(${t.id})" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.45rem 0.9rem;">
+                        Accept Task (Lock ${requiredStake} Stake)
+                    </button>`;
+                } else if (t.status === 'CLAIMED') {
+                    if (isClaimedByMe) {
+                        actionHtml = `<button onclick="submitTask(${t.id})" class="btn btn-outline" style="border-color: #fbbf24; color: #fbbf24; font-size: 0.85rem; padding: 0.45rem 0.9rem;">
+                            Submit Deliverable
+                        </button>`;
+                    } else {
+                        actionHtml = `<span style="font-size: 0.85rem; color: #fbbf24;">In Progress (${t.assignedTo})</span>`;
+                    }
+                } else if (t.status === 'SUBMITTED') {
+                    actionHtml = `<button onclick="verifyAndPay(${t.id})" class="btn btn-outline" style="border-color: var(--accent-emerald); color: var(--accent-emerald); font-size: 0.85rem; padding: 0.45rem 0.9rem;">
+                        Verify & Release Escrow (+25 XP)
+                    </button>`;
+                } else if (t.status === 'COMPLETED') {
+                    actionHtml = `<span style="font-size: 0.85rem; color: var(--accent-emerald); font-weight: 700;">✓ Completed & Paid</span>`;
+                }
+
+                return `
+                <div class="quest-card">
+                    <div class="quest-header">
+                        <span class="${badgeClass}">${t.category}</span>
+                        <span class="quest-bounty">${t.reward} Credits</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #38bdf8; font-weight: 700;">
+                            ⚡ Priority: ${t.priorityScore} Pts
+                        </span>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">
+                            ⏱️ ~${t.deadlineHours}h remaining
+                        </span>
+                    </div>
+
+                    <h3 class="quest-title">${t.title}</h3>
+                    <p class="quest-desc">${t.description}</p>
+
+                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.6rem;">
+                        <div>Posted by: <strong>${t.requester}</strong></div>
+                        <div style="color: #fbbf24;">Helper Collateral: ${requiredStake} Credits (10% lock)</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(255, 255, 255, 0.05);">
+                            STATUS: ${t.status}
+                        </span>
+                        ${actionHtml}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Task Acceptance with 10% Collateral Lock
+        function acceptTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            const requiredStake = Math.max(10, Math.floor(task.reward * 0.1));
+
+            if (currentUser.credits < requiredStake) {
+                alert(`Insufficient credits! You need at least ${requiredStake} credits for the 10% helper stake lock.`);
+                return;
+            }
+
+            if (confirm(`Accept "${task.title}"?\n\nThis will lock ${requiredStake} Credits as helper collateral until delivery is verified.`)) {
+                currentUser.credits -= requiredStake;
+                task.status = 'CLAIMED';
+                task.assignedTo = currentUser.name;
+                saveAndRefresh();
+                alert(`Task accepted! ${requiredStake} credits held in collateral. Proceed with the errand!`);
+            }
+        }
+
+        function submitTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            const notes = prompt("Enter delivery verification notes (e.g. 'Delivered to room 314 and handed to student'):");
+            if (notes !== null) {
+                task.status = 'SUBMITTED';
+                saveAndRefresh();
+                alert("Work submitted! The requester has been notified to verify delivery.");
+            }
+        }
+
+        function verifyAndPay(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+            const requiredStake = Math.max(10, Math.floor(task.reward * 0.1));
+
+            if (confirm(`Confirm delivery verification for "${task.title}"?\n\nThis will release the ${task.reward} bounty to the helper, refund their ${requiredStake} collateral stake, and grant +25 XP.`)) {
+                currentUser.credits += (task.reward + requiredStake);
+                currentUser.xp += 25;
+                task.status = 'COMPLETED';
+                saveAndRefresh();
+                alert(`Delivery verified! ${task.reward} bounty + ${requiredStake} stake released. +25 XP awarded!`);
+            }
+        }
+
+        function filterCategory(cat, btn) {
+            activeCategoryFilter = cat;
+            document.querySelectorAll('#category-filter-bar .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderFeed();
+        }
+
+        function resetDefaultTasks() {
+            tasks = JSON.parse(JSON.stringify(initialTasks));
+            saveAndRefresh();
+        }
+
+        function saveAndRefresh() {
+            localStorage.setItem('taskflow_tasks', JSON.stringify(tasks));
+            document.getElementById('user-credits-display').textContent = `${currentUser.credits} 🪙`;
+            document.getElementById('user-xp-display').textContent = `${currentUser.xp} XP`;
+            renderFeed();
+        }
+
+        // Post Task Modal Handlers
+        function openPostModal() {
+            document.getElementById('post-task-modal').style.display = 'flex';
+            updateModalCalculations();
+        }
+
+        function closePostModal() {
+            document.getElementById('post-task-modal').style.display = 'none';
+        }
+
+        function updateModalCalculations() {
+            const reward = parseFloat(document.getElementById('modal-reward').value) || 0;
+            const deadline = parseFloat(document.getElementById('modal-deadline').value) || 1;
+            const category = document.getElementById('modal-category').value;
+
+            const stake = Math.max(10, Math.floor(reward * 0.1));
+            const score = calculateScore({ category, reward, deadlineHours: deadline });
+
+            document.getElementById('modal-escrow-lock').textContent = `${reward} Credits`;
+            document.getElementById('modal-helper-stake').textContent = `${stake} Credits`;
+            document.getElementById('modal-calc-score').textContent = `${score} Pts`;
+        }
+
+        function handlePostTask(e) {
+            e.preventDefault();
+            const reward = parseFloat(document.getElementById('modal-reward').value) || 0;
+
+            if (currentUser.credits < reward) {
+                alert(`Insufficient balance! You need ${reward} credits in escrow, but you currently have ${currentUser.credits} credits.`);
+                return;
+            }
+
+            const newTask = {
+                id: Date.now(),
+                title: document.getElementById('modal-title').value,
+                category: document.getElementById('modal-category').value,
+                reward: reward,
+                deadlineHours: parseFloat(document.getElementById('modal-deadline').value) || 2,
+                description: document.getElementById('modal-desc').value,
+                requester: currentUser.name,
+                status: "OPEN",
+                assignedTo: null
+            };
+
+            currentUser.credits -= reward;
+            tasks.unshift(newTask);
+            saveAndRefresh();
+            closePostModal();
+            alert(`Task posted successfully! ${reward} credits locked into financial escrow.`);
+        }
+
+        // Interactive Sandbox Algorithm Calculator
+        function runSimCalculation() {
+            const weight = parseInt(document.getElementById('sim-category').value, 10);
+            const reward = parseInt(document.getElementById('sim-reward').value, 10);
+            const urgency = parseInt(document.getElementById('sim-deadline').value, 10);
+
+            const score = (weight * 10) + Math.floor(reward * 0.5) + urgency;
+            const stake = Math.max(10, Math.floor(reward * 0.1));
+
+            document.getElementById('calc-preview-score').textContent = score;
+            document.getElementById('sim-reward-display').textContent = reward;
+            document.getElementById('sim-stake-display').textContent = `${stake} Credits`;
+            document.getElementById('sim-breakdown-text').innerHTML = 
+                `Calculation breakdown: (${weight} × 10) + (${reward} × 0.5) + ${urgency} = <strong>${score} points</strong>`;
+        }
+
+        function postSimulatedTask() {
+            const sel = document.getElementById('sim-category');
+            const catName = sel.options[sel.selectedIndex].text.split('(')[0].trim();
+            const reward = parseInt(document.getElementById('sim-reward').value, 10);
+            
+            const newTask = {
+                id: Date.now(),
+                title: `Demo: Fast Priority Errand (${catName})`,
+                category: catName,
+                reward: reward,
+                deadlineHours: 1.5,
+                description: `Created via Priority Algorithm Sandbox simulator with custom weight and bounty parameters.`,
+                requester: "Sandbox Demo",
+                status: "OPEN",
+                assignedTo: null
+            };
+
+            tasks.unshift(newTask);
+            saveAndRefresh();
+            window.location.hash = '#feed';
+            alert(`Configured task inserted into live Max-Heap! Check the top of the feed.`);
+        }
+
+        // Presentation Carousel
+        function selectSlide(num) {
+            currentSlideIndex = num;
+            document.getElementById('carousel-img').src = `slide_previews/slide-${num}.png`;
+            document.getElementById('slide-title-display').textContent = slideTitles[num - 1];
+            
+            document.querySelectorAll('.slide-thumb').forEach((thumb, idx) => {
+                if (idx === num - 1) thumb.classList.add('active');
+                else thumb.classList.remove('active');
+            });
+        }
+
+        function navigateSlide(dir) {
+            let next = currentSlideIndex + dir;
+            if (next < 1) next = 6;
+            if (next > 6) next = 1;
+            selectSlide(next);
+        }
+
+        // Keyboard navigation for presentation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') navigateSlide(1);
+            if (e.key === 'ArrowLeft') navigateSlide(-1);
+        });
+
+        // Architecture Tab Switcher
+        function openArchTab(tabId, btn) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-nav .tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFeed();
+            runSimCalculation();
+        });
+    </script>
+</body>
+</html>
