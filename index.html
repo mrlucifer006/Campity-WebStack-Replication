@@ -80,99 +80,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Slide Presentation Carousel */
-        .slide-carousel-container {
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .slide-main-view {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 16 / 9;
-            background: #020617;
-            border-radius: var(--radius-md);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .slide-main-view img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        .carousel-nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(17, 24, 39, 0.75);
-            backdrop-filter: blur(8px);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            z-index: 10;
-        }
-
-        .carousel-nav-btn:hover {
-            background: var(--accent-primary);
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
-        }
-
-        .carousel-nav-btn.prev { left: 1rem; }
-        .carousel-nav-btn.next { right: 1rem; }
-
-        .slide-thumbnails {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .slide-thumb {
-            aspect-ratio: 16 / 9;
-            border-radius: var(--radius-sm);
-            overflow: hidden;
-            cursor: pointer;
-            border: 2px solid transparent;
-            opacity: 0.6;
-            transition: all 0.2s ease;
-            background: #0f172a;
-        }
-
-        .slide-thumb:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        .slide-thumb.active {
-            border-color: var(--accent-teal);
-            opacity: 1;
-            box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
-        }
-
-        .slide-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -283,7 +190,6 @@
                 <a href="#feed">Task Feed</a>
                 <a href="#algorithm">Priority Engine</a>
                 <a href="#architecture">Dual Architecture</a>
-                <a href="#slides">6-Slide Presentation</a>
                 <a href="#report">Project Report</a>
                 
                 <!-- Live Simulated Student Status -->
@@ -334,9 +240,6 @@
                 </button>
                 <a href="#feed" class="btn btn-outline" style="font-size: 1rem; padding: 0.8rem 1.6rem;">
                     ⚡ Explore Prioritized Feed
-                </a>
-                <a href="#slides" class="btn btn-outline" style="font-size: 1rem; padding: 0.8rem 1.6rem; border-color: var(--accent-teal); color: var(--accent-teal);">
-                    📊 View 6-Slide PPT
                 </a>
                 <a href="TaskFlow_Project_Report.pdf" download class="btn btn-outline" style="font-size: 1rem; padding: 0.8rem 1.6rem; border-color: var(--accent-emerald); color: var(--accent-emerald);">
                     📄 Download Report PDF
@@ -476,71 +379,7 @@
             </div>
         </section>
 
-        <!-- SECTION 3: 6-SLIDE POWERPOINT PRESENTATION SHOWCASE -->
-        <section id="slides" style="margin-top: 4rem;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
-                <div>
-                    <span class="badge-academic" style="border-color: var(--accent-emerald); color: var(--accent-emerald);">
-                        PRESENTED BY SANJAI M S (24CS181)
-                    </span>
-                    <h2 style="font-size: 1.8rem; font-weight: 800; margin-top: 0.4rem;">
-                        📊 Official 6-Slide Project Presentation
-                    </h2>
-                    <p style="color: var(--text-secondary); font-size: 0.95rem;">
-                        Referencing the 8 chapters of the TaskFlow Project Report. Download the high-resolution PPTX deck or flip through below.
-                    </p>
-                </div>
-
-                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                    <a href="TaskFlow_Presentation.pptx" download class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        📥 Download .PPTX Presentation
-                    </a>
-                    <a href="TaskFlow_Presentation.pdf" download class="btn btn-outline" style="display: inline-flex; align-items: center; gap: 0.5rem;">
-                        📄 Download .PDF Slides
-                    </a>
-                </div>
-            </div>
-
-            <div class="slide-carousel-container">
-                <div class="slide-main-view">
-                    <button class="carousel-nav-btn prev" onclick="navigateSlide(-1)">❮</button>
-                    <img id="carousel-img" src="slide_previews/slide-1.png" alt="TaskFlow Presentation Slide">
-                    <button class="carousel-nav-btn next" onclick="navigateSlide(1)">❯</button>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary);" id="slide-title-display">
-                        Slide 1 / 6: Title & Project Overview — Sanjai M S
-                    </div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                        Use arrow keys or click thumbnails below
-                    </div>
-                </div>
-
-                <div class="slide-thumbnails">
-                    <div class="slide-thumb active" onclick="selectSlide(1)">
-                        <img src="slide_previews/slide-1.png" alt="Slide 1">
-                    </div>
-                    <div class="slide-thumb" onclick="selectSlide(2)">
-                        <img src="slide_previews/slide-2.png" alt="Slide 2">
-                    </div>
-                    <div class="slide-thumb" onclick="selectSlide(3)">
-                        <img src="slide_previews/slide-3.png" alt="Slide 3">
-                    </div>
-                    <div class="slide-thumb" onclick="selectSlide(4)">
-                        <img src="slide_previews/slide-4.png" alt="Slide 4">
-                    </div>
-                    <div class="slide-thumb" onclick="selectSlide(5)">
-                        <img src="slide_previews/slide-5.png" alt="Slide 5">
-                    </div>
-                    <div class="slide-thumb" onclick="selectSlide(6)">
-                        <img src="slide_previews/slide-6.png" alt="Slide 6">
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION 4: DUAL-STACK ARCHITECTURE & ENGINEERING DETAILS -->
+        <!-- SECTION 3: DUAL-STACK ARCHITECTURE & ENGINEERING DETAILS -->
         <section id="architecture" style="margin-top: 4rem;">
             <div style="margin-bottom: 1.5rem;">
                 <span class="badge-academic">CHAPTERS 3, 5, 6 & 7 ARCHITECTURE</span>
@@ -925,7 +764,6 @@
             </p>
             <div style="margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; justify-content: center; gap: 1.5rem;">
                 <a href="#feed">Task Feed</a>
-                <a href="#slides">Presentation</a>
                 <a href="#report">Report</a>
                 <a href="https://github.com/mrlucifer006/Campity-WebStack-Replication" target="_blank">GitHub Repository</a>
             </div>
@@ -1025,16 +863,6 @@
 
         let tasks = JSON.parse(localStorage.getItem('taskflow_tasks')) || initialTasks;
         let activeCategoryFilter = 'ALL';
-        let currentSlideIndex = 1;
-
-        const slideTitles = [
-            "Slide 1 / 6: Title & Project Overview — Sanjai M S (24CS181)",
-            "Slide 2 / 6: Motivation, Problem Statement & Benchmark Selection",
-            "Slide 3 / 6: System Architecture & Dual-Stack Implementation",
-            "Slide 4 / 6: The Intelligent Priority Queue Scheduling Engine",
-            "Slide 5 / 6: Core Business Logic & Financial Escrow Protocol",
-            "Slide 6 / 6: Performance Evaluation, Deliverables & Conclusion"
-        ];
 
         // Calculate Priority Score using Report Chapter 4 Formulation
         function calculateScore(task) {
@@ -1296,31 +1124,6 @@
             window.location.hash = '#feed';
             alert(`Configured task inserted into live Max-Heap! Check the top of the feed.`);
         }
-
-        // Presentation Carousel
-        function selectSlide(num) {
-            currentSlideIndex = num;
-            document.getElementById('carousel-img').src = `slide_previews/slide-${num}.png`;
-            document.getElementById('slide-title-display').textContent = slideTitles[num - 1];
-            
-            document.querySelectorAll('.slide-thumb').forEach((thumb, idx) => {
-                if (idx === num - 1) thumb.classList.add('active');
-                else thumb.classList.remove('active');
-            });
-        }
-
-        function navigateSlide(dir) {
-            let next = currentSlideIndex + dir;
-            if (next < 1) next = 6;
-            if (next > 6) next = 1;
-            selectSlide(next);
-        }
-
-        // Keyboard navigation for presentation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight') navigateSlide(1);
-            if (e.key === 'ArrowLeft') navigateSlide(-1);
-        });
 
         // Architecture Tab Switcher
         function openArchTab(tabId, btn) {
